@@ -38,21 +38,21 @@ class Module(BaseModule):
 
     Parameters
     ----------
-    symbol : Symbol
-    data_names : list of str
+    symbol      : Symbol
+    data_names  : list of str
         Default is `('data')` for a typical model used in image classification.
     label_names : list of str
         Default is `('softmax_label')` for a typical model used in image
         classification.
-    logger : Logger
+    logger      : Logger
         Default is `logging`.
-    context : Context or list of Context
+    context     : Context or list of Context
         Default is `cpu()`.
-    work_load_list : list of number
+    work_load_list      : list of number
         Default `None`, indicating uniform workload.
-    fixed_param_names: list of str
+    fixed_param_names   : list of str
         Default `None`, indicating no network parameters are fixed.
-    state_names : list of str
+    state_names         : list of str
         states are similar to data and label, but not provided by data iterator.
         Instead they are initialized to 0 and can be set by set_states()
     """
@@ -392,14 +392,20 @@ class Module(BaseModule):
         else:
             shared_group = None
 
-        self._exec_group = DataParallelExecutorGroup(self._symbol, self._context,
-                                                     self._work_load_list, self._data_shapes,
-                                                     self._label_shapes, self._param_names,
-                                                     for_training, inputs_need_grad,
-                                                     shared_group, logger=self.logger,
-                                                     fixed_param_names=self._fixed_param_names,
-                                                     grad_req=grad_req,
-                                                     state_names=self._state_names)
+        self._exec_group = DataParallelExecutorGroup(   self._symbol, 
+                                                        self._context,
+                                                        self._work_load_list, 
+                                                        self._data_shapes,
+                                                        self._label_shapes, 
+                                                        self._param_names,
+                                                        for_training, 
+                                                        inputs_need_grad,
+                                                        shared_group, 
+                                                        logger=self.logger,
+                                                        fixed_param_names=self._fixed_param_names,
+                                                        grad_req=grad_req,
+                                                        state_names=self._state_names
+                                                        )
         # self._total_exec_bytes = self._exec_group._total_exec_bytes
         if shared_module is not None:
             self.params_initialized = True
@@ -720,15 +726,15 @@ class MutableModule(BaseModule):
 
     Parameters
     ----------
-    symbol : Symbol
-    data_names : list of str
-    label_names : list of str
-    logger : Logger
-    context : Context or list of Context
-    work_load_list : list of number
-    max_data_shapes : list of (name, shape) tuple, designating inputs whose shape vary
-    max_label_shapes : list of (name, shape) tuple, designating inputs whose shape vary
-    fixed_param_prefix : list of str, indicating fixed parameters
+    symbol              : Symbol
+    data_names          : list of str
+    label_names         : list of str
+    logger              : Logger
+    context             : Context or list of Context
+    work_load_list      : list of number
+    max_data_shapes     : list of (name, shape) tuple, designating inputs whose shape vary
+    max_label_shapes    : list of (name, shape) tuple, designating inputs whose shape vary
+    fixed_param_prefix  : list of str, indicating fixed parameters
     """
     def __init__(self, symbol, data_names, label_names,
                  logger=logging, context=ctx.cpu(), work_load_list=None,
@@ -842,11 +848,21 @@ class MutableModule(BaseModule):
         if len(max_label_shapes) == 0:
             max_label_shapes = None
 
-        module = Module(self._symbol, self._data_names, self._label_names, logger=self.logger,
-                        context=self._context, work_load_list=self._work_load_list,
-                        fixed_param_names=self._fixed_param_names)
-        module.bind([max_data_shapes for _ in xrange(len(self._context))], [max_label_shapes for _ in xrange(len(self._context))],
-                    for_training, inputs_need_grad, force_rebind=False, shared_module=None)
+        module = Module(self._symbol, 
+                        self._data_names, 
+                        self._label_names, 
+                        logger=self.logger,
+                        context=self._context, 
+                        work_load_list=self._work_load_list,
+                        fixed_param_names=self._fixed_param_names
+                        )
+        module.bind([max_data_shapes for _ in xrange(len(self._context))], 
+                    [max_label_shapes for _ in xrange(len(self._context))],
+                    for_training, 
+                    inputs_need_grad, 
+                    force_rebind=False, 
+                    shared_module=None
+                    )
         self._curr_module = module
 
         # copy back saved params, if already initialized
@@ -892,8 +908,8 @@ class MutableModule(BaseModule):
 
         Parameters
         ----------
-        train_data : DataIter
-        eval_data : DataIter
+        train_data  : DataIter
+        eval_data   : DataIter
             If not `None`, will be used as validation set and evaluate the performance
             after each epoch.
         eval_metric : str or EvalMetric
@@ -952,14 +968,23 @@ class MutableModule(BaseModule):
         """
         assert num_epoch is not None, 'please specify number of epochs'
 
-        self.bind(data_shapes=train_data.provide_data, label_shapes=train_data.provide_label,
-                  for_training=True, force_rebind=force_rebind)
+        self.bind(  data_shapes=train_data.provide_data, 
+                    label_shapes=train_data.provide_label,
+                    for_training=True, 
+                    force_rebind=force_rebind
+                    )
         if monitor is not None:
             self.install_monitor(monitor)
-        self.init_params(initializer=initializer, arg_params=arg_params, aux_params=aux_params,
-                         allow_missing=allow_missing, force_init=force_init)
-        self.init_optimizer(kvstore=kvstore, optimizer=optimizer,
-                            optimizer_params=optimizer_params)
+        self.init_params(   initializer=initializer, 
+                            arg_params=arg_params, 
+                            aux_params=aux_params,
+                            allow_missing=allow_missing, 
+                            force_init=force_init
+                            )
+        self.init_optimizer(kvstore=kvstore, 
+                            optimizer=optimizer,
+                            optimizer_params=optimizer_params
+                            )
 
         if validation_metric is None:
             validation_metric = eval_metric
@@ -1075,9 +1100,13 @@ class MutableModule(BaseModule):
             # print('forward(), second, data_batch.provide_label: ', data_batch.provide_label)
             #print('data_batch.key_frame_flag: ', data_batch.key_frame_flag)
 
-            module.bind(data_batch.provide_data, data_batch.provide_label, self._curr_module.for_training,
-                        self._curr_module.inputs_need_grad, force_rebind=False,
-                        shared_module=self._curr_module)
+            module.bind(data_batch.provide_data, 
+                        data_batch.provide_label, 
+                        self._curr_module.for_training,
+                        self._curr_module.inputs_need_grad, 
+                        force_rebind=False,
+                        shared_module=self._curr_module
+                        )
             self._curr_module = module
 
         self._curr_module.forward(data_batch, is_train=is_train)

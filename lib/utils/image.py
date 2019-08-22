@@ -221,16 +221,19 @@ def get_pair_image_mv(roidb, config):
             '''
 
             # TODO. This position should read the motion vector.
-            # Original: path_to_mv_pattern: ['self.data_path', 'Data', 'DET', 'train', 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
+            # Original: path_to_mv_pattern: ['self.data_path', 'Data', 'DET', 'train', 
+            # 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
             path_to_mv_pattern = roi_rec['image'].split('/')
-            # Expect: path_to_mv_pattern: ['self.data_path', 'MV', 'DET', 'train', 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
+            # Expect: path_to_mv_pattern: ['self.data_path', 'MV', 'DET', 'train', 
+            # 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
             path_to_mv_pattern[6] = 'MV'
             path_to_mv = '/'.join(path_to_mv_pattern)
             path_to_mv = path_to_mv[:-5] + '.pkl'
 
+            # print 'path_to_mv:!!!!!', path_to_mv
             if not os.path.exists(path_to_mv):
                 train_mv_not_found_count += 1
-                mv = np.zeros(2*600*1000).reshape((600,1000,2))
+                mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
                 print('train_mv_not_found_count: ', train_mv_not_found_count, ', path_to_mv: ', path_to_mv)
             else:
                 mv = pickle.load(open(path_to_mv, 'rb'))
@@ -239,11 +242,14 @@ def get_pair_image_mv(roidb, config):
             # assert os.path.exists(path_to_mv), '%s does not exist'.format(path_to_mv)
             # mv = pickle.load(open(path_to_mv, 'rb'))
         else:
+            # print 'what?????'
             # Case II: DET train data.
             ref_im = im.copy()
+            # print 'im.shape', im.shape
             eq_flag = 1
             # Should have a definition of mv. No mv for DET train data.
-            mv = np.zeros(2*600*1000).reshape((600,1000,2))
+            # mv = np.zeros(2*600*1000).reshape((600,1000,2))
+            mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
 
 
         if roidb[i]['flipped']:
@@ -255,21 +261,31 @@ def get_pair_image_mv(roidb, config):
         scale_ind = random.randrange(len(config.SCALES))
         target_size = config.SCALES[scale_ind][0]
         max_size = config.SCALES[scale_ind][1]
-
-        im, im_scale = resize(im, target_size, max_size, stride=config.network.IMAGE_STRIDE)
+        # print 'im shape: !!!    ', im.shape
+        # print 'ref_im shape: !!!', ref_im.shape
+        # print 'mv shape: !!!    ', mv.shape
+        # **********************************
+        im, im_scale     = resize(im,     target_size, max_size, stride=config.network.IMAGE_STRIDE)
         ref_im, im_scale = resize(ref_im, target_size, max_size, stride=config.network.IMAGE_STRIDE)
-        #mv, mv_scale = resize(mv, target_size, max_size, stride=config.network.IMAGE_STRIDE)
-        #mv = cv2.resize(mv, (36, 63), interpolation = cv2.INTER_AREA)
-        im_tensor = transform(im, config.network.PIXEL_MEANS)
+        # **********************************
+        mv, mv_scale     = resize(mv,     target_size, max_size, stride=config.network.IMAGE_STRIDE)
+        # mv = cv2.resize(mv, (36, 63), interpolation = cv2.INTER_AREA)
+        im_tensor     = transform(im,     config.network.PIXEL_MEANS)
         ref_im_tensor = transform(ref_im, config.network.PIXEL_MEANS)
-        #mv_tensor = transform(mv, [0,0,0])
+        # print 'im shape: !!!    ', im.shape
+        # print 'ref_im shape: !!!', ref_im.shape
+        # print 'mv shape: !!!    ', mv.shape
+        im_scale = 1.0
+        # mv_tensor = transform(mv, [0,0,0])
         mv_tensor = mv
         processed_ims.append(im_tensor)
         processed_ref_ims.append(ref_im_tensor)
         processed_mvs.append(mv_tensor)
         processed_eq_flags.append(eq_flag)
         im_info = [im_tensor.shape[2], im_tensor.shape[3], im_scale]
+        # im_info = [im_tensor.shape[2], im_tensor.shape[3]]
         new_rec['boxes'] = roi_rec['boxes'].copy() * im_scale
+        # new_rec['boxes'] = roi_rec['boxes'].copy()
         new_rec['im_info'] = im_info
         processed_roidb.append(new_rec)
     return processed_ims, processed_ref_ims, processed_eq_flags, processed_roidb, processed_mvs
@@ -287,8 +303,10 @@ def resize(im, target_size, max_size, stride=0, interpolation = cv2.INTER_LINEAR
     :return:
     """
     im_shape = im.shape
+    # origin image size
     im_size_min = np.min(im_shape[0:2])
     im_size_max = np.max(im_shape[0:2])
+    # resize scale
     im_scale = float(target_size) / float(im_size_min)
     # prevent bigger axis from being more than max_size:
     if np.round(im_scale * im_size_max) > max_size:

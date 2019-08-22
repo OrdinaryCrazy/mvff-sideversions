@@ -65,7 +65,7 @@ def test_rcnn(cfg, dataset, image_set, root_path, dataset_path,
         assert False, 'require a logger'
 
     # print cfg
-    pprint.pprint(cfg)
+    # pprint.pprint(cfg)
     logger.info('testing cfg:{}\n'.format(pprint.pformat(cfg)))
 
     # load symbol and testing data
@@ -93,10 +93,6 @@ def test_rcnn(cfg, dataset, image_set, root_path, dataset_path,
 
     # load model
     arg_params, aux_params = load_param(prefix, epoch, process=True)
-
-    # print('arg_params: ', arg_params)
-    # print('aux_params: ', aux_params)
-
 
     # create predictor
     key_predictors = [get_predictor(key_sym, key_sym_instance, cfg, arg_params, aux_params, test_datas[i], [ctx[i]], True) for i in range(gpu_num)]

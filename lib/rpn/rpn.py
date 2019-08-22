@@ -139,8 +139,10 @@ def get_rpn_pair_mv_batch(roidb, cfg):
     :return: data, label
     """
     assert len(roidb) == 1, 'Single batch only'
+
     # TODO. This line should be similar to get_pair_image(roidb, config)
     # Note that this code depends on the assumption that len(roidb) == 1
+    
     imgs, ref_imgs, eq_flags, roidb, motion_vectors = get_pair_image_mv(roidb, cfg)
     im_array = imgs[0]
     ref_im_array = ref_imgs[0]

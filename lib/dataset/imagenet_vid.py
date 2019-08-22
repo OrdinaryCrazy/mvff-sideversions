@@ -332,6 +332,7 @@ class ImageNetVID(IMDB):
         info_str = ''
         annopath = os.path.join(self.data_path, 'Annotations', '{0!s}.xml')
         imageset_file = os.path.join(self.data_path, 'ImageSets', self.image_set + '_eval.txt')
+        # imageset_file = os.path.join('/home/jingtun/mvff-sideversions/', 'ImageSets', self.image_set + '_eval.txt')
         annocache = os.path.join(self.cache_path, self.name + '_annotations.pkl')
 
         with open(imageset_file, 'w') as f:

@@ -189,7 +189,8 @@ class TestLoader(mx.io.DataIter):
         _, feat_shape, _ = self.feat_conv_3x3_relu.infer_shape(**data_shape)
         # print('get_batch(), data[0][\'motion_vector\']: ', data[0]['motion_vector'], ', data[0][\'motion_vector\'].shape: ', data[0]['motion_vector'].shape)
         data[0]['motion_vector'] = data[0]['motion_vector'].astype('float64')
-        data[0]['motion_vector'] = cv2.resize(data[0]['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_AREA)
+        # **************************
+        # data[0]['motion_vector'] = cv2.resize(data[0]['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_AREA)
         data[0]['motion_vector'] = transform(data[0]['motion_vector'], [0,0])
         # print('get_batch(), data[0][\'motion_vector\']: ', data[0]['motion_vector'], ', data[0][\'motion_vector\'].shape: ', data[0]['motion_vector'].shape)
 
@@ -356,9 +357,12 @@ class AnchorLoader(mx.io.DataIter):
         if max_label_shape is None:
             max_label_shape = []
         max_shapes = dict(max_data_shape + max_label_shape)
+        # print 'max_shapes:!!!', max_shapes
         input_batch_size = max_shapes['data_ref'][0]
         im_info = [[max_shapes['data_ref'][2], max_shapes['data_ref'][3], 1.0]]
+        # before this step should keep the consistance between mv and im
         _, feat_shape, _ = self.feat_sym.infer_shape(**max_shapes)
+        
         label = assign_anchor(feat_shape[0], np.zeros((0, 5)), im_info, self.cfg,
                               self.feat_stride, self.anchor_scales, self.anchor_ratios, self.allowed_border,
                               self.normalize_target, self.bbox_mean, self.bbox_std)
@@ -437,8 +441,7 @@ class AnchorLoader(mx.io.DataIter):
         ctx = self.ctx
         if work_load_list is None:
             work_load_list = [1] * len(ctx)
-        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), \
-            "Invalid settings for work load. "
+        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), "Invalid settings for work load. "
         slices = _split_input_slice(self.batch_size, work_load_list)
         rst = []
         for idx, islice in enumerate(slices):
@@ -469,7 +472,9 @@ class AnchorLoader(mx.io.DataIter):
         #for k, v in data.items():
         #    print(k, v)
         data_shape = {k: v.shape for k, v in data.items()}
-        #print(data_shape)
+        # print(data_shape)
+        # {'data': (1, 3, 562, 1000), 'eq_flag': (1,), 'data_ref': (1, 3, 562, 1000), 
+        # 'im_info': (1, 3), 'motion_vector': (720, 1280, 2)}
         del data_shape['im_info']
         del data_shape['data']
 
@@ -477,19 +482,25 @@ class AnchorLoader(mx.io.DataIter):
         del data_shape1['eq_flag']
         del data_shape1['motion_vector']
         _, feat_shape, _ = self.feat_conv_3x3_relu.infer_shape(**data_shape1)
-        #print('feat_shape: ', feat_shape)
+        # print('feat_shape: ', feat_shape)
+        # ('feat_shape: ', [(1, 1024, 36, 63)])
 
-        #print('shape: ', data['motion_vector'].shape)
-        #print("size: ", int(feat_shape[0][2]), int(feat_shape[0][3]))
+        # print('shape: ', data['motion_vector'].shape)
+        # ('shape: ', (720, 1280, 2))
+        # print("size: ", int(feat_shape[0][2]), int(feat_shape[0][3]))
+        # ('size: ', 36, 63)
         data['motion_vector'] = data['motion_vector'].astype('float64')
-        data['motion_vector'] = cv2.resize(data['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_AREA)
-        #print('data[\'motion_vector\'].shape: ', data['motion_vector'].shape)
+
+        # ****************************************
+        # data['motion_vector'] = cv2.resize(data['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_AREA)
+
+        # print('data[\'motion_vector\'].shape: ', data['motion_vector'].shape)
         data['motion_vector'] = transform(data['motion_vector'], [0,0])
-        #print('data[\'motion_vector\'].shape: ', data['motion_vector'].shape)
-        #print("data['motion_vector']: ", data['motion_vector'])
-        #data['motion_vector'] = cv2.resize(data['motion_vector'], (36, 63))
+        # print('data[\'motion_vector\'].shape: ', data['motion_vector'].shape)
+        # print("data['motion_vector']: ", data['motion_vector'])
+        # data['motion_vector'] = cv2.resize(data['motion_vector'], (36, 63))
         data_shape = {k: v.shape for k, v in data.items()}
-        #print(data_shape)
+        # print(data_shape)
         del data_shape['im_info']
         del data_shape['data']
 

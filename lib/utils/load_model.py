@@ -19,6 +19,9 @@ def load_checkpoint(prefix, epoch):
     aux_params : dict of str to NDArray
         Model parameter, dict of name to NDArray of net's auxiliary states.
     """
+
+    # print '%s-%04d.params' % (prefix, epoch)
+    # ./model/pretrained_model/resnet_v1_101-0000.params
     save_dict = mx.nd.load('%s-%04d.params' % (prefix, epoch))
     arg_params = {}
     aux_params = {}
