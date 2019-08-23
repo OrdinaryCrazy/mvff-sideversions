@@ -61,7 +61,7 @@ TRAIN:
   warmup: false
   # ********************
   begin_epoch: 0
-  end_epoch: 2
+  end_epoch: 1
   model_prefix: 'mvff_rfcn_vid'
   # ********************
   # whether resume training

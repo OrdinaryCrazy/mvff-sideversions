@@ -160,13 +160,12 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     # decide training params
     # metric
     rpn_eval_metric = metric.RPNAccMetric()
-    rpn_cls_metric = metric.RPNLogLossMetric()
+    rpn_cls_metric  = metric.RPNLogLossMetric()
     rpn_bbox_metric = metric.RPNL1LossMetric()
-    eval_metric = metric.RCNNAccMetric(config)
-    cls_metric = metric.RCNNLogLossMetric(config)
-    bbox_metric = metric.RCNNL1LossMetric(config)
-    eval_metrics = mx.metric.CompositeEvalMetric()
-    # rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric, cls_metric, bbox_metric
+    eval_metric     = metric.RCNNAccMetric(config)
+    cls_metric      = metric.RCNNLogLossMetric(config)
+    bbox_metric     = metric.RCNNL1LossMetric(config)
+    eval_metrics    = mx.metric.CompositeEvalMetric()
     for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric, cls_metric, bbox_metric]:
         eval_metrics.add(child_metric)
     # callback
@@ -196,10 +195,18 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
 
     print('Start to train model')
     # train
-    mod.fit(train_data, eval_metric=eval_metrics, epoch_end_callback=epoch_end_callback,
-            batch_end_callback=batch_end_callback, kvstore=config.default.kvstore,
-            optimizer='sgd', optimizer_params=optimizer_params,
-            arg_params=arg_params, aux_params=aux_params, begin_epoch=begin_epoch, num_epoch=end_epoch)
+    mod.fit(train_data,
+            eval_metric=eval_metrics, 
+            epoch_end_callback=epoch_end_callback,
+            batch_end_callback=batch_end_callback, 
+            kvstore=config.default.kvstore,
+            optimizer='sgd', 
+            optimizer_params=optimizer_params,
+            arg_params=arg_params, 
+            aux_params=aux_params, 
+            begin_epoch=begin_epoch, 
+            num_epoch=end_epoch
+            )
 
 
 def main():

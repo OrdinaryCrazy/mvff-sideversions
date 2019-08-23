@@ -318,9 +318,9 @@ class ImageNetVID(IMDB):
         for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
-            print('AP for {} = {:.4f}'.format(cls, ap[cls_ind-1]))
+            print('AP for {} \t= {:.4f}'.format(cls, ap[cls_ind-1]))
             info_str += 'AP for {} = {:.4f}\n'.format(cls, ap[cls_ind-1])
-        print('Mean AP@0.5 = {:.4f}'.format(np.mean(ap)))
+        print('Mean AP@0.5 \t= {:.4f}'.format(np.mean(ap)))
         info_str += 'Mean AP@0.5 = {:.4f}\n\n'.format(np.mean(ap))
         return info_str
 
@@ -345,8 +345,8 @@ class ImageNetVID(IMDB):
         for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
-            print('AP for {} = {:.4f}'.format(cls, ap[cls_ind-1]))
+            print('AP for {} \t= {:.4f}'.format(cls, ap[cls_ind-1]))
             info_str += 'AP for {} = {:.4f}\n'.format(cls, ap[cls_ind-1])
-        print('Mean AP@0.5 = {:.4f}'.format(np.mean(ap)))
+        print('Mean AP@0.5 \t= {:.4f}'.format(np.mean(ap)))
         info_str += 'Mean AP@0.5 = {:.4f}\n\n'.format(np.mean(ap))
         return info_str

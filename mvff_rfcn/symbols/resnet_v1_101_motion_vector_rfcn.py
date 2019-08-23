@@ -32,7 +32,6 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         self.filter_list = [256, 512, 1024, 2048]
     # Res-101 NNFeat
     def get_resnet_v1(self, data):
-        print 'in get_resnet_v1!!!! ',data.list_arguments()
     # -----------------------------------------------------------------
         conv1               = mx.symbol.Convolution(name='conv1', data=data , num_filter=64, 
                                                     pad=(3,3), kernel=(7,7), stride=(2,2), no_bias=True
@@ -522,6 +521,32 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
             data=res5c_relu, kernel=(3, 3), pad=(6, 6), dilate=(6, 6), num_filter=1024, name="feat_conv_3x3")
         feat_conv_3x3_relu = mx.sym.Activation(data=feat_conv_3x3, act_type="relu", name="feat_conv_3x3_relu")
         return feat_conv_3x3_relu
+    def get_mv_net(self, motion_vector_scale):
+        # 600 x 1000 ------------------------------------------------------------------------
+        motion_vector_scale = mx.sym.Convolution(name='mv_conv1', data=motion_vector_scale, num_filter=64, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
+        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn1',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale = mx.sym.Activation( name='mv_relu1', data=motion_vector_scale, act_type='relu')
+        motion_vector_scale = mx.sym.Pooling(    name='mv_pool1', data=motion_vector_scale, pad=(3,3), kernel=(7,7), stride=(2,2), pool_type='max')
+        # 300 x 500 ------------------------------------------------------------------------
+        motion_vector_scale = mx.sym.Convolution(name='mv_conv2', data=motion_vector_scale, num_filter=128, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
+        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn2',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale = mx.sym.Activation( name='mv_relu2', data=motion_vector_scale, act_type='relu')
+        motion_vector_scale = mx.sym.Pooling(    name='mv_pool2', data=motion_vector_scale, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='max')
+        # 150 x 250 ------------------------------------------------------------------------
+        motion_vector_scale = mx.sym.Convolution(name='mv_conv3', data=motion_vector_scale, num_filter=256, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
+        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn3',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale = mx.sym.Activation( name='mv_relu3', data=motion_vector_scale, act_type='relu')
+        motion_vector_scale = mx.sym.Pooling(    name='mv_pool3', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='max')
+        # 75 x 125  ------------------------------------------------------------------------
+        motion_vector_scale = mx.sym.Convolution(name='mv_conv4', data=motion_vector_scale, num_filter=512, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
+        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn4',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale = mx.sym.Activation( name='mv_relu4', data=motion_vector_scale, act_type='relu')
+        motion_vector_scale = mx.sym.Pooling(    name='mv_pool4', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='max')
+        # 36 x 60   ------------------------------------------------------------------------
+        motion_vector_scale = mx.sym.Convolution(name='mv_conv5', data=motion_vector_scale, num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1), no_bias=True)
+        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn5',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale = mx.sym.Activation( name='mv_relu5', data=motion_vector_scale, act_type='relu')
+        return motion_vector_scale
     # network structure
     def get_train_symbol(self, cfg):
 
@@ -531,54 +556,31 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         num_anchors     = cfg.network.NUM_ANCHORS
 
         # data = mx.sym.Variable(name="data")                     # OK
-        data_ref = mx.sym.Variable(name="data_ref")             # OK
+        data_ref        = mx.sym.Variable(name="data_ref")      # OK
         # if non-key frame, eq_flag == 0; if key frame, eq_flag == 1
-        eq_flag = mx.sym.Variable(name="eq_flag")               # OK
-        im_info = mx.sym.Variable(name="im_info")               # OK
-        gt_boxes = mx.sym.Variable(name="gt_boxes")             # OK
-        rpn_label = mx.sym.Variable(name='label')               # OK
+        eq_flag         = mx.sym.Variable(name="eq_flag")       # OK
+        im_info         = mx.sym.Variable(name="im_info")       # OK
+        gt_boxes        = mx.sym.Variable(name="gt_boxes")      # OK
+        rpn_label       = mx.sym.Variable(name='label')         # OK
         rpn_bbox_target = mx.sym.Variable(name='bbox_target')   # OK
         rpn_bbox_weight = mx.sym.Variable(name='bbox_weight')   # OK
 
         motion_vector = mx.sym.Variable(name='motion_vector')   # TODO
 
-        motion_vector_scale = mx.sym.Convolution(name='motion_vector_scale', data=motion_vector , 
-                                                num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1))
+        motion_vector_scale = mx.sym.Convolution(name='motion_vector_scale', data=motion_vector , num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1))
     # -----------------------------------------------------------------
         # TODO
-        # 600 x 1000 ------------------------------------------------------------------------
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv1', data=motion_vector_scale, num_filter=64, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.sym.BatchNorm(name='mv_bn1', data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation(name='mv_relu1', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(name='mv_pool1', data=motion_vector_scale, pad=(3,3), kernel=(7,7), stride=(2,2), pool_type='max')
-        # 300 x 500 ------------------------------------------------------------------------
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv2', data=motion_vector_scale, num_filter=128, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.sym.BatchNorm(name='mv_bn2', data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation(name='mv_relu2', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(name='mv_pool2', data=motion_vector_scale, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='max')
-        # 150 x 250 ------------------------------------------------------------------------
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv3', data=motion_vector_scale, num_filter=256, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.sym.BatchNorm(name='mv_bn3', data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation(name='mv_relu3', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(name='mv_pool3', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='max')
-        # 75 x 125  ------------------------------------------------------------------------
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv4', data=motion_vector_scale, num_filter=512, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.sym.BatchNorm(name='mv_bn4', data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation(name='mv_relu4', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(name='mv_pool4', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='max')
-        # 36 x 60   ------------------------------------------------------------------------
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv5', data=motion_vector_scale, num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.sym.BatchNorm(name='mv_bn5', data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation(name='mv_relu5', data=motion_vector_scale, act_type='relu')
-        # ------------------------------------------------------------------------
+        motion_vector_scale = self.get_mv_net(motion_vector_scale)
+    # ------------------------------------------------------------------------
         # shared convolutional layers
         conv_feat        = self.get_resnet_v1(data_ref)
         flow_grid        = mx.sym.GridGenerator(data=motion_vector_scale, transform_type='warp', name='flow_grid')
         warp_conv_feat   = mx.sym.BilinearSampler(data=conv_feat, grid=flow_grid, name='warping_feat')
+        # control the training process of key frame and non-key frame
         select_conv_feat = mx.sym.take(mx.sym.Concat(*[warp_conv_feat, conv_feat], dim=0), eq_flag)
 
         conv_feats = mx.sym.SliceChannel(select_conv_feat, axis=1, num_outputs=2)
-
+    # -----------------------------------------------------------------
         # RPN layers
         rpn_feat = conv_feats[0]
         rpn_cls_score = mx.sym.Convolution( data=rpn_feat, kernel=(1, 1), pad=(0, 0), 
@@ -675,24 +677,24 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         group = mx.sym.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob, bbox_loss, mx.sym.BlockGrad(rcnn_label), mx.sym.BlockGrad(bbox_pred), mx.sym.BlockGrad(bbox_pred_for_train_mAP), mx.sym.BlockGrad(rois), mx.sym.BlockGrad(im_info), mx.sym.BlockGrad(data_ref)])
         self.sym = group
         return group
-
+    # -----------------------------------------------------------------
     def get_key_test_symbol(self, cfg):
 
         # config alias for convenient
-        num_classes = cfg.dataset.NUM_CLASSES
+        num_classes     = cfg.dataset.NUM_CLASSES
         num_reg_classes = (2 if cfg.CLASS_AGNOSTIC else num_classes)
-        num_anchors = cfg.network.NUM_ANCHORS
+        num_anchors     = cfg.network.NUM_ANCHORS
 
-        data = mx.sym.Variable(name="data")
-        im_info = mx.sym.Variable(name="im_info")
+        data     = mx.sym.Variable(name="data")
+        im_info  = mx.sym.Variable(name="im_info")
         data_key = mx.sym.Variable(name="data_key")
         # motion_vector = mx.sym.Variable(name='motion_vector')
         # feat_key = mx.sym.Variable(name="feat_key")
 
         # shared convolutional layers
-        conv_feat = self.get_resnet_v1(data)
+        conv_feat  = self.get_resnet_v1(data)
         conv_feats = mx.sym.SliceChannel(conv_feat, axis=1, num_outputs=2)
-
+    # -----------------------------------------------------------------
         # RPN
         rpn_feat = conv_feats[0]
         rpn_cls_score = mx.sym.Convolution(
@@ -752,7 +754,7 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         group = mx.sym.Group([data_key, bbox_pred, bbox_pred1, bbox_pred2, conv_feat, rois, cls_prob, rpn_cls_score, rpn_bbox_pred, rpn_cls_prob, rfcn_cls, rfcn_bbox, cls_score1])
         self.sym = group
         return group
-
+    # -----------------------------------------------------------------
     def get_cur_test_symbol(self, cfg):
 
         # config alias for convenient
@@ -763,58 +765,15 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         im_info         = mx.sym.Variable(name="im_info")
         motion_vector   = mx.sym.Variable(name='motion_vector')
         conv_feat       = mx.sym.Variable(name="feat_key")
-
-        '''
-        for i in range(9):
-            motion_vector = mx.symbol.concat(motion_vector, motion_vector, dim=1)
-
-        conv_feat = mx.symbol.concat(conv_feat, motion_vector, dim=1)
-        conv_feat = mx.sym.SliceChannel(conv_feat, axis=1, num_outputs=2)[0]
-
-        '''
-
+    # -----------------------------------------------------------------
         motion_vector_scale = mx.symbol.Convolution(name='motion_vector_scale', data=motion_vector , num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1))
-        # 600 x 1000 ------------------------------------------------------------------------
-        motion_vector_scale = mx.symbol.Convolution(name='mv_conv1', data=motion_vector_scale, num_filter=64, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.symbol.BatchNorm(  name='mv_bn1',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.symbol.Activation( name='mv_relu1', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.symbol.Pooling(    name='mv_pool1', data=motion_vector_scale, pad=(3,3), kernel=(7,7), stride=(2,2), pool_type='max')
-        # 300 x 500 ------------------------------------------------------------------------
-        motion_vector_scale = mx.symbol.Convolution(name='mv_conv2', data=motion_vector_scale, num_filter=128, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.symbol.BatchNorm(  name='mv_bn2',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.symbol.Activation( name='mv_relu2', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.symbol.Pooling(    name='mv_pool2', data=motion_vector_scale, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='max')
-        # 150 x 250 ------------------------------------------------------------------------
-        motion_vector_scale = mx.symbol.Convolution(name='mv_conv3', data=motion_vector_scale, num_filter=256, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.symbol.BatchNorm(  name='mv_bn3',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.symbol.Activation( name='mv_relu3', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.symbol.Pooling(    name='mv_pool3', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='max')
-        # 75 x 125  ------------------------------------------------------------------------
-        motion_vector_scale = mx.symbol.Convolution(name='mv_conv4', data=motion_vector_scale, num_filter=512, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.symbol.BatchNorm(  name='mv_bn4',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.symbol.Activation( name='mv_relu4', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.symbol.Pooling(    name='mv_pool4', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='max')
-        # 36 x 60   ------------------------------------------------------------------------
-        motion_vector_scale = mx.symbol.Convolution(name='mv_conv5', data=motion_vector_scale, num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1), no_bias=True)
-        motion_vector_scale = mx.symbol.BatchNorm(  name='mv_bn5',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.symbol.Activation( name='mv_relu5', data=motion_vector_scale, act_type='relu')
-        # ------------------------------------------------------------------------
-        '''
-        motion_vector_scale = mx.symbol.LeakyReLU(name='motion_ReLU1', data=motion_vector_scale , act_type='leaky', slope=0.1)
-        motion_vector_scale = mx.symbol.Convolution(name='motion_vector_scale2', data=motion_vector_scale , num_filter=16, pad=(1,1), kernel=(3,3), stride=(1,1))
-        motion_vector_scale = mx.symbol.LeakyReLU(name='motion_ReLU2', data=motion_vector_scale , act_type='leaky', slope=0.1)
-        motion_vector_scale = mx.symbol.Convolution(name='motion_vector_scale3', data=motion_vector_scale , num_filter=32, pad=(1,1), kernel=(3,3), stride=(1,1))
-        motion_vector_scale = mx.symbol.LeakyReLU(name='motion_ReLU3', data=motion_vector_scale , act_type='leaky', slope=0.1)
-        motion_vector_scale = mx.symbol.Convolution(name='motion_vector_scale4', data=motion_vector_scale , num_filter=16, pad=(1,1), kernel=(3,3), stride=(1,1))
-        motion_vector_scale = mx.symbol.LeakyReLU(name='motion_ReLU4', data=motion_vector_scale , act_type='leaky', slope=0.1)
-        motion_vector_scale = mx.symbol.Convolution(name='motion_vector_scale5', data=motion_vector_scale , num_filter=2, pad=(1,1), kernel=(3,3), stride=(1,1))
-        '''
-
+        motion_vector_scale = self.get_mv_net(motion_vector_scale)
+    # -----------------------------------------------------------------
         # shared convolutional layers
-        flow_grid = mx.sym.GridGenerator(data=motion_vector_scale, transform_type='warp', name='flow_grid')
-        conv_feat = mx.sym.BilinearSampler(data=conv_feat, grid=flow_grid, name='warping_feat')
+        flow_grid  = mx.sym.GridGenerator(data=motion_vector_scale, transform_type='warp', name='flow_grid')
+        conv_feat  = mx.sym.BilinearSampler(data=conv_feat, grid=flow_grid, name='warping_feat')
         conv_feats = mx.sym.SliceChannel(conv_feat, axis=1, num_outputs=2)
-
+    # -----------------------------------------------------------------
         # RPN
         rpn_feat = conv_feats[0]
         rpn_cls_score = mx.sym.Convolution(
@@ -877,7 +836,7 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         group = mx.sym.Group([rois, cls_prob, bbox_pred, bbox_pred1, bbox_pred2, conv_feat, rpn_cls_score, rpn_bbox_pred, rpn_cls_prob, rfcn_cls, rfcn_bbox, cls_score1])
         self.sym = group
         return group
-
+    # -----------------------------------------------------------------
     def get_batch_test_symbol(self, cfg):
         # TODO
         return

@@ -36,7 +36,7 @@ def parse_vid_rec(filename, classhash, img_ids, defaultIOUthr=0.5, pixelToleranc
         thr = (gt_w*gt_h)/((gt_w+pixelTolerance)*(gt_h+pixelTolerance))
         obj_dict['thr'] = np.min([thr, defaultIOUthr])
         objects.append(obj_dict)
-    return {'bbox' : np.array([x['bbox'] for x in objects]),
+    return { 'bbox' : np.array([x['bbox'] for x in objects]),
              'label': np.array([x['label'] for x in objects]),
              'thr'  : np.array([x['thr'] for x in objects]),
              'img_ids': img_ids}
@@ -69,12 +69,12 @@ def vid_ap(rec, prec):
 def vid_eval(detpath, annopath, imageset_file, classname_map, annocache, ovthresh=0.5):
     """
     imagenet vid evaluation
-    :param detpath: detection results detpath.format(classname)
-    :param annopath: annotations annopath.format(classname)
-    :param imageset_file: text file containing list of images
-    :param annocache: caching annotations
-    :param ovthresh: overlap threshold
-    :return: rec, prec, ap
+    :param detpath:         detection results detpath.format(classname)
+    :param annopath:        annotations annopath.format(classname)
+    :param imageset_file:   text file containing list of images
+    :param annocache:       caching annotations
+    :param ovthresh:        overlap threshold
+    :return:                rec, prec, ap
     """
     print('detpath: ', detpath)
     print('annopath: ', annopath)
@@ -205,10 +205,10 @@ def vid_eval(detpath, annopath, imageset_file, classname_map, annocache, ovthres
         tp_cell[id] = tp
         fp_cell[id] = fp
 
-    tp_all = np.concatenate([x for x in np.array(tp_cell)[gt_img_ids] if x is not None])
-    fp_all = np.concatenate([x for x in np.array(fp_cell)[gt_img_ids] if x is not None])
-    obj_labels = np.concatenate([x for x in np.array(obj_labels_cell)[gt_img_ids] if x is not None])
-    confs = np.concatenate([x for x in np.array(obj_confs_cell)[gt_img_ids] if x is not None])
+    tp_all      = np.concatenate([x for x in np.array(tp_cell)[gt_img_ids] if x is not None])
+    fp_all      = np.concatenate([x for x in np.array(fp_cell)[gt_img_ids] if x is not None])
+    obj_labels  = np.concatenate([x for x in np.array(obj_labels_cell)[gt_img_ids] if x is not None])
+    confs       = np.concatenate([x for x in np.array(obj_confs_cell)[gt_img_ids] if x is not None])
 
     sorted_inds = np.argsort(-confs)
     tp_all = tp_all[sorted_inds]
@@ -220,10 +220,9 @@ def vid_eval(detpath, annopath, imageset_file, classname_map, annocache, ovthres
         # compute precision recall
         fp = np.cumsum(fp_all[obj_labels == c])
         tp = np.cumsum(tp_all[obj_labels == c])
-        rec = tp / float(npos[c])
+        rec = tp / np.maximum(float(npos[c]), np.finfo(np.float64).eps)
         # avoid division by zero in case first detection matches a difficult ground ruth
         prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
         ap[c] = vid_ap(rec, prec)
     ap = ap[1:]
     return ap
-
