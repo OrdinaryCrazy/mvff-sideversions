@@ -51,16 +51,10 @@ def get_predictor(sym, sym_instance, cfg, arg_params, aux_params, test_data, ctx
     else:
         test_data_instance = [test_data.provide_data_single_test_initialization]
 
-    predictor = Predictor(  sym, 
-                            data_names, 
-                            label_names,
-                            context=ctx, 
-                            max_data_shapes=max_data_shape,
-                            provide_data=test_data_instance, 
-                            provide_label=test_data.provide_label,
-                            arg_params=arg_params, 
-                            aux_params=aux_params
-                            )
+    predictor = Predictor(sym, data_names, label_names,
+                          context=ctx, max_data_shapes=max_data_shape,
+                          provide_data=test_data_instance, provide_label=test_data.provide_label,
+                          arg_params=arg_params, aux_params=aux_params)
 
     return predictor
 
@@ -71,11 +65,10 @@ def test_rcnn(cfg, dataset, image_set, root_path, dataset_path,
         assert False, 'require a logger'
 
     # print cfg
-    # pprint.pprint(cfg)
+    pprint.pprint(cfg)
     logger.info('testing cfg:{}\n'.format(pprint.pformat(cfg)))
 
     # load symbol and testing data
-    print 'load test symbol: ', cfg.symbol + '.' + cfg.symbol
     key_sym_instance = eval(cfg.symbol + '.' + cfg.symbol)()
     cur_sym_instance = eval(cfg.symbol + '.' + cfg.symbol)()
     key_sym = key_sym_instance.get_key_test_symbol(cfg)
@@ -100,6 +93,10 @@ def test_rcnn(cfg, dataset, image_set, root_path, dataset_path,
 
     # load model
     arg_params, aux_params = load_param(prefix, epoch, process=True)
+
+    # print('arg_params: ', arg_params)
+    # print('aux_params: ', aux_params)
+
 
     # create predictor
     key_predictors = [get_predictor(key_sym, key_sym_instance, cfg, arg_params, aux_params, test_datas[i], [ctx[i]], True) for i in range(gpu_num)]

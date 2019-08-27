@@ -176,9 +176,6 @@ class TestLoader(mx.io.DataIter):
         cur_roidb = self.roidb[self.cur_roidb_index].copy()
         cur_roidb['image'] = cur_roidb['pattern'] % self.cur_frameid
 
-        # print('get_batch(), cur_roidb[\'image\']: ', cur_roidb['image'])
-
-
         self.cur_seg_len = cur_roidb['frame_seg_len']
         data, label, im_info = get_rpn_testbatch_mv([cur_roidb], self.cfg)
 
@@ -189,8 +186,7 @@ class TestLoader(mx.io.DataIter):
         _, feat_shape, _ = self.feat_conv_3x3_relu.infer_shape(**data_shape)
         # print('get_batch(), data[0][\'motion_vector\']: ', data[0]['motion_vector'], ', data[0][\'motion_vector\'].shape: ', data[0]['motion_vector'].shape)
         data[0]['motion_vector'] = data[0]['motion_vector'].astype('float64')
-        # **************************
-        # data[0]['motion_vector'] = cv2.resize(data[0]['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_AREA)
+        data[0]['motion_vector'] = cv2.resize(data[0]['motion_vector'], (int(feat_shape[0][3])*16, int(feat_shape[0][2])*16), interpolation = cv2.INTER_NEAREST)
         data[0]['motion_vector'] = transform(data[0]['motion_vector'], [0,0])
         # print('get_batch(), data[0][\'motion_vector\']: ', data[0]['motion_vector'], ', data[0][\'motion_vector\'].shape: ', data[0]['motion_vector'].shape)
 
@@ -204,7 +200,6 @@ class TestLoader(mx.io.DataIter):
         else:
             self.key_frame_flag = 2
 
-
         self.data_name = ['data', 'im_info', 'data_key', 'motion_vector', 'feat_key']
         extend_data = [{'data': data[0]['data'],
                         'im_info': data[0]['im_info'],
@@ -215,19 +210,14 @@ class TestLoader(mx.io.DataIter):
         self.data = [[mx.nd.array(extend_data[i][name]) for name in self.data_name] for i in xrange(len(data))]
         self.im_info = im_info
 
-
         if self.key_frame_flag == 0 or self.key_frame_flag == 1:
             self.data_name = ['data', 'im_info', 'data_key']
             if len(self.data[0]) == 5:
                 self.data = [[mx.nd.array(self.data[0][0]), mx.nd.array(self.data[0][1]), mx.nd.array(self.data[0][2])]]
-            # print('get_batch(), key frame, self.data: ', self.data)
         else:
             self.data_name = ['im_info', 'motion_vector', 'feat_key']
             if len(self.data[0]) == 5:
                 self.data = [[mx.nd.array(self.data[0][1]), mx.nd.array(self.data[0][3]), mx.nd.array(self.data[0][4])]]
-                # print('get_batch(), self.data: ', self.data)
-            # print('get_batch(), non-key frame, self.data: ', self.data)
-
 
 class AnchorLoader(mx.io.DataIter):
 
@@ -357,12 +347,9 @@ class AnchorLoader(mx.io.DataIter):
         if max_label_shape is None:
             max_label_shape = []
         max_shapes = dict(max_data_shape + max_label_shape)
-        # print 'max_shapes:!!!', max_shapes
         input_batch_size = max_shapes['data_ref'][0]
         im_info = [[max_shapes['data_ref'][2], max_shapes['data_ref'][3], 1.0]]
-        # before this step should keep the consistance between mv and im
         _, feat_shape, _ = self.feat_sym.infer_shape(**max_shapes)
-        
         label = assign_anchor(feat_shape[0], np.zeros((0, 5)), im_info, self.cfg,
                               self.feat_stride, self.anchor_scales, self.anchor_ratios, self.allowed_border,
                               self.normalize_target, self.bbox_mean, self.bbox_std)
@@ -441,7 +428,8 @@ class AnchorLoader(mx.io.DataIter):
         ctx = self.ctx
         if work_load_list is None:
             work_load_list = [1] * len(ctx)
-        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), "Invalid settings for work load. "
+        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), \
+            "Invalid settings for work load. "
         slices = _split_input_slice(self.batch_size, work_load_list)
         rst = []
         for idx, islice in enumerate(slices):
@@ -469,12 +457,7 @@ class AnchorLoader(mx.io.DataIter):
         # get testing data for multigpu
         data, label = get_rpn_pair_mv_batch(iroidb, self.cfg)
 
-        #for k, v in data.items():
-        #    print(k, v)
         data_shape = {k: v.shape for k, v in data.items()}
-        # print(data_shape)
-        # {'data': (1, 3, 562, 1000), 'eq_flag': (1,), 'data_ref': (1, 3, 562, 1000), 
-        # 'im_info': (1, 3), 'motion_vector': (720, 1280, 2)}
         del data_shape['im_info']
         del data_shape['data']
 
@@ -482,25 +465,11 @@ class AnchorLoader(mx.io.DataIter):
         del data_shape1['eq_flag']
         del data_shape1['motion_vector']
         _, feat_shape, _ = self.feat_conv_3x3_relu.infer_shape(**data_shape1)
-        # print('feat_shape: ', feat_shape)
-        # ('feat_shape: ', [(1, 1024, 36, 63)])
 
-        # print('shape: ', data['motion_vector'].shape)
-        # ('shape: ', (720, 1280, 2))
-        # print("size: ", int(feat_shape[0][2]), int(feat_shape[0][3]))
-        # ('size: ', 36, 63)
         data['motion_vector'] = data['motion_vector'].astype('float64')
-
-        # ****************************************
-        # data['motion_vector'] = cv2.resize(data['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_AREA)
-
-        # print('data[\'motion_vector\'].shape: ', data['motion_vector'].shape)
+        data['motion_vector'] = cv2.resize(data['motion_vector'], (int(feat_shape[0][3])*16, int(feat_shape[0][2])*16), interpolation = cv2.INTER_AREA)
         data['motion_vector'] = transform(data['motion_vector'], [0,0])
-        # print('data[\'motion_vector\'].shape: ', data['motion_vector'].shape)
-        # print("data['motion_vector']: ", data['motion_vector'])
-        # data['motion_vector'] = cv2.resize(data['motion_vector'], (36, 63))
         data_shape = {k: v.shape for k, v in data.items()}
-        # print(data_shape)
         del data_shape['im_info']
         del data_shape['data']
 

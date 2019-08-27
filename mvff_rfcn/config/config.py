@@ -72,7 +72,7 @@ config.TRAIN.end_epoch = 0
 config.TRAIN.model_prefix = ''
 
 # whether resume training
-config.TRAIN.RESUME = True
+config.TRAIN.RESUME = False
 # whether flip image
 config.TRAIN.FLIP = True
 # whether shuffle image

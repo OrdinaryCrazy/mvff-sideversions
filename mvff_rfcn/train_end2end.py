@@ -60,13 +60,10 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     prefix = os.path.join(final_output_path, prefix)
 
     # load symbol
-    # print 'load symbol !!!!', curr_path, 'symbols', config.symbol + '.py'
     shutil.copy2(os.path.join(curr_path, 'symbols', config.symbol + '.py'), final_output_path)
     sym_instance = eval(config.symbol + '.' + config.symbol)()
     sym = sym_instance.get_train_symbol(config)
-    # print 'sym.get_internals():!!!!', sym.get_internals()
     feat_sym = sym.get_internals()['rpn_cls_score_output']
-    # print 'feat_sym:!!!', feat_sym.list_arguments()
     feat_conv_3x3_relu = sym.get_internals()['feat_conv_3x3_relu_output']
 
     # setup multi-gpu
@@ -74,7 +71,7 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     input_batch_size = config.TRAIN.BATCH_IMAGES * batch_size
 
     # print config
-    # pprint.pprint(config)
+    pprint.pprint(config)
     logger.info('training config:{}\n'.format(pprint.pformat(config)))
 
     # load dataset and prepare imdb for training
@@ -85,36 +82,25 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     roidb = merge_roidb(roidbs)
     roidb = filter_roidb(roidb, config)
     # load training data
-    train_data = AnchorLoader(  feat_sym, 
-                                feat_conv_3x3_relu, 
-                                roidb, 
-                                config, 
-                                batch_size=input_batch_size, 
-                                shuffle=config.TRAIN.SHUFFLE, ctx=ctx,
-                                feat_stride=config.network.RPN_FEAT_STRIDE, 
-                                anchor_scales=config.network.ANCHOR_SCALES,
-                                anchor_ratios=config.network.ANCHOR_RATIOS, 
-                                aspect_grouping=config.TRAIN.ASPECT_GROUPING,
-                                normalize_target=config.network.NORMALIZE_RPN, 
-                                bbox_mean=config.network.ANCHOR_MEANS,
-                                bbox_std=config.network.ANCHOR_STDS
-                                )
+    train_data = AnchorLoader(feat_sym, feat_conv_3x3_relu, roidb, config, batch_size=input_batch_size, shuffle=config.TRAIN.SHUFFLE, ctx=ctx,
+                              feat_stride=config.network.RPN_FEAT_STRIDE, anchor_scales=config.network.ANCHOR_SCALES,
+                              anchor_ratios=config.network.ANCHOR_RATIOS, aspect_grouping=config.TRAIN.ASPECT_GROUPING,
+                              normalize_target=config.network.NORMALIZE_RPN, bbox_mean=config.network.ANCHOR_MEANS,
+                              bbox_std=config.network.ANCHOR_STDS)
 
     # infer max shape
-    # max_data_shape = [('data', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),
-    #                   ('data_ref', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),
-    #                   ('eq_flag', (1,))]
-
-    data_shape1 = {'data_ref': (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))}
-    # data_shape1 = {'data_ref': (config.TRAIN.BATCH_IMAGES, 3, 720, 1280)}
+    #max_data_shape = [('data', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),
+    #                  ('data_ref', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),
+    #                  ('eq_flag', (1,))]
+    data_shape1 = {'data_ref': (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])),
+                   }
     _, feat_shape111, _ = feat_conv_3x3_relu.infer_shape(**data_shape1)
 
     max_data_shape = [('data_ref', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),
-    # max_data_shape = [('data_ref', (config.TRAIN.BATCH_IMAGES, 3, 720, 1280)),
                       ('eq_flag', (1,)),
-                      ('motion_vector', (config.TRAIN.BATCH_IMAGES, 2,max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
-
-    # print 'max_data_shape:!!! ', max_data_shape
+                    #   ('motion_vector', (config.TRAIN.BATCH_IMAGES, 2, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
+                      ('motion_vector', (config.TRAIN.BATCH_IMAGES, 2, int(feat_shape111[0][2])*16, int(feat_shape111[0][3])*16 ))]
+                    #   ('motion_vector', (config.TRAIN.BATCH_IMAGES, 2, int(feat_shape111[0][2]), int(feat_shape111[0][3]) ))]
 
     max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
     max_data_shape.append(('gt_boxes', (config.TRAIN.BATCH_IMAGES, 100, 5)))
@@ -129,11 +115,7 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
         print('continue training from ', begin_epoch)
         arg_params, aux_params = load_param(prefix, begin_epoch, convert=True)
     else:
-        # print "not reuse, pretrained"
         arg_params, aux_params = load_param(pretrained, epoch, convert=True)
-        #arg_params_flow, aux_params_flow = load_param(pretrained_flow, epoch, convert=True)
-        #arg_params.update(arg_params_flow)
-        #aux_params.update(aux_params_flow)
         sym_instance.init_weight(config, arg_params, aux_params)
 
     # check parameter shapes
@@ -144,15 +126,9 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     data_names = [k[0] for k in train_data.provide_data_single]
     label_names = [k[0] for k in train_data.provide_label_single]
 
-    mod = MutableModule(sym, 
-                        data_names=data_names, 
-                        label_names=label_names,
-                        logger=logger, 
-                        context=ctx, 
-                        max_data_shapes=[max_data_shape for _ in range(batch_size)],
-                        max_label_shapes=[max_label_shape for _ in range(batch_size)], 
-                        fixed_param_prefix=fixed_param_prefix
-                        )
+    mod = MutableModule(sym, data_names=data_names, label_names=label_names,
+                        logger=logger, context=ctx, max_data_shapes=[max_data_shape for _ in range(batch_size)],
+                        max_label_shapes=[max_label_shape for _ in range(batch_size)], fixed_param_prefix=fixed_param_prefix)
 
     if config.TRAIN.RESUME:
         mod._preload_opt_states = '%s-%04d.states'%(prefix, begin_epoch)
@@ -160,12 +136,13 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     # decide training params
     # metric
     rpn_eval_metric = metric.RPNAccMetric()
-    rpn_cls_metric  = metric.RPNLogLossMetric()
+    rpn_cls_metric = metric.RPNLogLossMetric()
     rpn_bbox_metric = metric.RPNL1LossMetric()
-    eval_metric     = metric.RCNNAccMetric(config)
-    cls_metric      = metric.RCNNLogLossMetric(config)
-    bbox_metric     = metric.RCNNL1LossMetric(config)
-    eval_metrics    = mx.metric.CompositeEvalMetric()
+    eval_metric = metric.RCNNAccMetric(config)
+    cls_metric = metric.RCNNLogLossMetric(config)
+    bbox_metric = metric.RCNNL1LossMetric(config)
+    eval_metrics = mx.metric.CompositeEvalMetric()
+    # rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric, cls_metric, bbox_metric
     for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric, cls_metric, bbox_metric]:
         eval_metrics.add(child_metric)
     # callback
@@ -195,33 +172,22 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
 
     print('Start to train model')
     # train
-    mod.fit(train_data,
-            eval_metric=eval_metrics, 
-            epoch_end_callback=epoch_end_callback,
-            batch_end_callback=batch_end_callback, 
-            kvstore=config.default.kvstore,
-            optimizer='sgd', 
-            optimizer_params=optimizer_params,
-            arg_params=arg_params, 
-            aux_params=aux_params, 
-            begin_epoch=begin_epoch, 
-            num_epoch=end_epoch
-            )
+    mod.fit(train_data, eval_metric=eval_metrics, epoch_end_callback=epoch_end_callback,
+            batch_end_callback=batch_end_callback, kvstore=config.default.kvstore,
+            optimizer='sgd', optimizer_params=optimizer_params,
+            arg_params=arg_params, aux_params=aux_params, begin_epoch=begin_epoch, num_epoch=end_epoch)
+    # print arg_params['mv_conv1_weight']
+    # print arg_params['mv_conv2_weight']
+    # print arg_params['mv_conv3_weight']
+    # print arg_params['mv_conv4_weight']
+    # print arg_params['mv_conv5_weight']
 
 
 def main():
     print('Called with argument:', args)
     ctx = [mx.gpu(int(i)) for i in config.gpus.split(',')]
-    train_net(  args, ctx, 
-                config.network.pretrained, 
-                config.network.pretrained_flow, 
-                config.network.pretrained_epoch, 
-                config.TRAIN.model_prefix,
-                config.TRAIN.begin_epoch, 
-                config.TRAIN.end_epoch, 
-                config.TRAIN.lr, 
-                config.TRAIN.lr_step
-                )
+    train_net(args, ctx, config.network.pretrained, config.network.pretrained_flow, config.network.pretrained_epoch, config.TRAIN.model_prefix,
+              config.TRAIN.begin_epoch, config.TRAIN.end_epoch, config.TRAIN.lr, config.TRAIN.lr_step)
 
 if __name__ == '__main__':
     main()

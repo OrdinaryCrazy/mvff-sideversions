@@ -6,7 +6,7 @@ gpus: '0'
 CLASS_AGNOSTIC: true
 SCALES:
 - 600
-- 1000
+- 1067
 default:
   frequent: 100
   kvstore: device
@@ -50,20 +50,18 @@ network:
 dataset:
   NUM_CLASSES: 31
   dataset: ImageNetVID
-  dataset_path: "/home/ssd1T_2/boyuan/ImageNetVID/ILSVRC2015"
+  dataset_path: "/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015"
   image_set: DET_train_30classes+VID_train_15frames
-  root_path: "/home/ssd1T_2/boyuan/ImageNetVID"
+  root_path: "/home/ssd1T_1/boyuan/ImageNetVID"
   test_image_set: VID_val_videos
   proposal: rpn
 TRAIN:
   lr: 0.00025
   lr_step: '1.333'
   warmup: false
-  # ********************
   begin_epoch: 0
   end_epoch: 1
   model_prefix: 'mvff_rfcn_vid'
-  # ********************
   # whether resume training
   RESUME: false
   # whether flip image

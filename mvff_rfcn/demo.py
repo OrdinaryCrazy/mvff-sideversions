@@ -76,9 +76,7 @@ def main():
         im = cv2.imread(im_name, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
         target_size = config.SCALES[0][0]
         max_size = config.SCALES[0][1]
-
         im, im_scale = resize(im, target_size, max_size, stride=config.network.IMAGE_STRIDE)
-        
         im_tensor = transform(im, config.network.PIXEL_MEANS)
         im_info = np.array([[im_tensor.shape[2], im_tensor.shape[3], im_scale]], dtype=np.float32)
         if idx % key_frame_interval == 0:

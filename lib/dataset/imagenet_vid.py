@@ -318,9 +318,9 @@ class ImageNetVID(IMDB):
         for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
-            print('AP for {} \t= {:.4f}'.format(cls, ap[cls_ind-1]))
+            print('AP for {} = {:.4f}'.format(cls, ap[cls_ind-1]))
             info_str += 'AP for {} = {:.4f}\n'.format(cls, ap[cls_ind-1])
-        print('Mean AP@0.5 \t= {:.4f}'.format(np.mean(ap)))
+        print('Mean AP@0.5 = {:.4f}'.format(np.mean(ap)))
         info_str += 'Mean AP@0.5 = {:.4f}\n\n'.format(np.mean(ap))
         return info_str
 
@@ -332,7 +332,6 @@ class ImageNetVID(IMDB):
         info_str = ''
         annopath = os.path.join(self.data_path, 'Annotations', '{0!s}.xml')
         imageset_file = os.path.join(self.data_path, 'ImageSets', self.image_set + '_eval.txt')
-        # imageset_file = os.path.join('/home/jingtun/mvff-sideversions/', 'ImageSets', self.image_set + '_eval.txt')
         annocache = os.path.join(self.cache_path, self.name + '_annotations.pkl')
 
         with open(imageset_file, 'w') as f:
@@ -345,8 +344,8 @@ class ImageNetVID(IMDB):
         for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
-            print('AP for {} \t= {:.4f}'.format(cls, ap[cls_ind-1]))
+            print('AP for {} = {:.4f}'.format(cls, ap[cls_ind-1]))
             info_str += 'AP for {} = {:.4f}\n'.format(cls, ap[cls_ind-1])
-        print('Mean AP@0.5 \t= {:.4f}'.format(np.mean(ap)))
+        print('Mean AP@0.5 = {:.4f}'.format(np.mean(ap)))
         info_str += 'Mean AP@0.5 = {:.4f}\n\n'.format(np.mean(ap))
         return info_str
