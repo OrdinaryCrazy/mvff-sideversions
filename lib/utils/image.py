@@ -1,7 +1,7 @@
 # --------------------------------------------------------
 # Rivulet
 # Licensed under The MIT License [see LICENSE for details]
-# Modified by Boyuan Feng
+# Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
 # --------------------------------------------------------
 # Deep Feature Flow
@@ -78,9 +78,6 @@ def get_image_mv(roidb, config):
         path_to_mv = '/'.join(path_to_mv_pattern)
         path_to_mv = path_to_mv[:-5] + '.pkl'
 
-        # print('img_path: ', roi_rec['image'], ', mv_path: ', path_to_mv)
-
-
         if not os.path.exists(path_to_mv):
             mv_not_found_count += 1
             # mv = np.ones(2*600*1000).reshape((600,1000,2))
@@ -90,9 +87,6 @@ def get_image_mv(roidb, config):
             mv = pickle.load(open(path_to_mv, 'rb'))
             # For debugging, mv is set to zero now. This indicates that the cur feature should be same as the key feature.
             # mv = np.zeros(2*600*1000).reshape((600,1000,2))
-        #assert os.path.exists(path_to_mv), '%s does not exist'.format(path_to_mv)
-        # mv = pickle.load(open(path_to_mv, 'rb'))
-
 
         if roidb[i]['flipped']:
             im = im[:, ::-1, :]
@@ -112,10 +106,7 @@ def get_image_mv(roidb, config):
         new_rec['im_info'] = im_info
         processed_roidb.append(new_rec)
 
-
-
         return processed_ims, processed_roidb, processed_mvs
-
 
 def get_pair_image(roidb, config):
     """
@@ -172,9 +163,7 @@ def get_pair_image(roidb, config):
         processed_roidb.append(new_rec)
     return processed_ims, processed_ref_ims, processed_eq_flags, processed_roidb
 
-
 train_mv_not_found_count = 0
-
 
 def get_pair_image_mv(roidb, config):
     """
@@ -199,7 +188,6 @@ def get_pair_image_mv(roidb, config):
 
         if roi_rec.has_key('pattern'):
             # Case I: VID train data.
-
             # TODO. Not sure whether we should use +5 here.
             ref_id = (roi_rec['frame_seg_id'] // 12) * 12
             ref_image = roi_rec['pattern'] % ref_id
@@ -207,17 +195,6 @@ def get_pair_image_mv(roidb, config):
             ref_im = cv2.imread(ref_image, cv2.IMREAD_COLOR|cv2.IMREAD_IGNORE_ORIENTATION)
             if ref_id == roi_rec['frame_seg_id']:
                 eq_flag = 1
-
-            '''
-            if not os.path.exists(ref_image):
-                print("ref_image does not exist: ", ref_image)
-                ref_im = im.copy()
-                eq_flag = 1
-            else:
-                ref_im = cv2.imread(ref_image, cv2.IMREAD_COLOR|cv2.IMREAD_IGNORE_ORIENTATION)
-                eq_flag = 0
-            '''
-
             # TODO. This position should read the motion vector.
             # Original: path_to_mv_pattern: ['self.data_path', 'Data', 'DET', 'train', 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
             path_to_mv_pattern = roi_rec['image'].split('/')
@@ -232,10 +209,6 @@ def get_pair_image_mv(roidb, config):
                 print('train_mv_not_found_count: ', train_mv_not_found_count, ', path_to_mv: ', path_to_mv)
             else:
                 mv = pickle.load(open(path_to_mv, 'rb'))
-
-
-            # assert os.path.exists(path_to_mv), '%s does not exist'.format(path_to_mv)
-            # mv = pickle.load(open(path_to_mv, 'rb'))
         else:
             # Case II: DET train data.
             ref_im = im.copy()
@@ -257,7 +230,6 @@ def get_pair_image_mv(roidb, config):
         im, im_scale = resize(im, target_size, max_size, stride=config.network.IMAGE_STRIDE)
         ref_im, im_scale = resize(ref_im, target_size, max_size, stride=config.network.IMAGE_STRIDE)
         # mv, mv_scale = resize(mv, target_size, max_size, stride=config.network.IMAGE_STRIDE)
-        #mv = cv2.resize(mv, (36, 63), interpolation = cv2.INTER_AREA)
         im_tensor = transform(im, config.network.PIXEL_MEANS)
         ref_im_tensor = transform(ref_im, config.network.PIXEL_MEANS)
         #mv_tensor = transform(mv, [0,0,0])
@@ -271,8 +243,6 @@ def get_pair_image_mv(roidb, config):
         new_rec['im_info'] = im_info
         processed_roidb.append(new_rec)
     return processed_ims, processed_ref_ims, processed_eq_flags, processed_roidb, processed_mvs
-
-
 
 def resize(im, target_size, max_size, stride=0, interpolation = cv2.INTER_LINEAR):
     """
@@ -293,7 +263,6 @@ def resize(im, target_size, max_size, stride=0, interpolation = cv2.INTER_LINEAR
         im_scale = float(max_size) / float(im_size_max)
 
     im = im.astype(np.float32)
-
     im = cv2.resize(im, None, None, fx=im_scale, fy=im_scale, interpolation=interpolation)
 
     if stride == 0:

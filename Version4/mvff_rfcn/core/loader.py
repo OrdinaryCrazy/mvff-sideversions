@@ -1,7 +1,7 @@
 # --------------------------------------------------------
 # Rivulet
 # Licensed under The MIT License [see LICENSE for details]
-# Modified by Boyuan Feng
+# Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
 # --------------------------------------------------------
 # Deep Feature Flow
@@ -49,7 +49,6 @@ class TestLoader(mx.io.DataIter):
         self.data_name = ['data', 'im_info', 'data_key', 'motion_vector', 'feat_key']
         self.label_name = None
 
-        #
         self.cur_roidb_index = 0
         self.cur_frameid = 0
         self.data_key = None

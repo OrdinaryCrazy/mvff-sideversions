@@ -1,7 +1,7 @@
 # --------------------------------------------------------
 # Rivulet
 # Licensed under The MIT License [see LICENSE for details]
-# Modified by Boyuan Feng
+# Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
 # --------------------------------------------------------
 # Deep Feature Flow
