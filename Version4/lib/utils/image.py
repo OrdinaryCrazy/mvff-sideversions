@@ -172,16 +172,17 @@ def get_pair_image_mv(roidb, config):
     :return: list of img as in mxnet format
     """
     global train_mv_not_found_count
-    num_images = len(roidb)
-    processed_ims = []
-    processed_ref_ims = []
-    processed_eq_flags = []
-    processed_roidb = []
-    processed_mvs = []
+    num_images          = len(roidb)
+    processed_ims       = []
+    processed_ref_ims   = []
+    processed_eq_flags  = []
+    processed_roidb     = []
+    processed_mvs       = []
+    processed_residual  = []
     for i in range(num_images):
         roi_rec = roidb[i]
 
-        eq_flag = 0 # 0 for unequal, 1 for equal. 0 for non-key frame, 1 for key frame.
+        eq_flag = 0 # 0 for non-key frame, 1 for key frame.
         # roi_rec['image'] = self.data_path/Data/DET/train/ILSVRC2015_VID_train_0000/ILSVRC2015_train_00000000/000010.JPEG
         assert os.path.exists(roi_rec['image']), '%s does not exist'.format(roi_rec['image'])
         im = cv2.imread(roi_rec['image'], cv2.IMREAD_COLOR|cv2.IMREAD_IGNORE_ORIENTATION)
@@ -189,26 +190,40 @@ def get_pair_image_mv(roidb, config):
         if roi_rec.has_key('pattern'):
             # Case I: VID train data.
             # TODO. Not sure whether we should use +5 here.
-            ref_id = (roi_rec['frame_seg_id'] // 12) * 12
+            ref_id    = (roi_rec['frame_seg_id'] // 12) * 12
             ref_image = roi_rec['pattern'] % ref_id
             assert os.path.exists(ref_image), '%s does not exist'.format(ref_image)
             ref_im = cv2.imread(ref_image, cv2.IMREAD_COLOR|cv2.IMREAD_IGNORE_ORIENTATION)
             if ref_id == roi_rec['frame_seg_id']:
                 eq_flag = 1
             # TODO. This position should read the motion vector.
-            # Original: path_to_mv_pattern: ['self.data_path', 'Data', 'DET', 'train', 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
+            # Original: path_to_mv_pattern: ['self.data_path', 'Data', 'DET', 'train', 
+            # 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
             path_to_mv_pattern = roi_rec['image'].split('/')
-            # Expect: path_to_mv_pattern: ['self.data_path', 'MV', 'DET', 'train', 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
+            # Expect: path_to_mv_pattern: ['self.data_path', 'MV', 'DET', 'train', 
+            # 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
             path_to_mv_pattern[6] = 'MV'
             path_to_mv = '/'.join(path_to_mv_pattern)
             path_to_mv = path_to_mv[:-5] + '.pkl'
-
             if not os.path.exists(path_to_mv):
                 train_mv_not_found_count += 1
                 mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
                 print('train_mv_not_found_count: ', train_mv_not_found_count, ', path_to_mv: ', path_to_mv)
             else:
                 mv = pickle.load(open(path_to_mv, 'rb'))
+
+            # read the residual
+            path_to_res_pattern = roi_rec['image'].split('/')
+            path_to_res_pattern[6] = 'Res'
+            path_to_res = '/'.join()
+            path_to_res = path_to_res[:-5] + 'pkl'
+            if not os.path.exists(path_to_mv):
+                train_mv_not_found_count += 1
+                mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
+                print('train_mv_not_found_count: ', train_mv_not_found_count, ', path_to_mv: ', path_to_mv)
+            else:
+                mv = pickle.load(open(path_to_mv, 'rb'))
+                
         else:
             # Case II: DET train data.
             ref_im = im.copy()
@@ -356,4 +371,3 @@ def tensor_vstack(tensor_list, pad=0):
     else:
         raise Exception('Sorry, unimplemented.')
     return all_tensor
-

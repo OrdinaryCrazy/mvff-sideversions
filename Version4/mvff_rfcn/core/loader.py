@@ -3,7 +3,6 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
-# --------------------------------------------------------
 # Deep Feature Flow
 # Copyright (c) 2017 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
@@ -70,32 +69,17 @@ class TestLoader(mx.io.DataIter):
     @property
     def provide_data(self):
         if self.key_frame_flag == 0 or self.key_frame_flag == 1:
-            # print('Provide_Data, key frame')
-            #tmp = self.data_name[:]
-            #tmp.remove('motion_vector')
-            #tmp.remove('feat_key')
             self.data_name = ['data', 'im_info', 'data_key']
-            # ['data', 'im_info', 'data_key']
-            # print('provide_data(), key frame, len(self.data): ', len(self.data[0]))
             if len(self.data[0]) == 5:
                 self.data = [[mx.nd.array(self.data[0][0]), mx.nd.array(self.data[0][1]), mx.nd.array(self.data[0][2])]]
             data = [[(k, v.shape) for k, v in zip(self.data_name, self.data[0])]]
             return data
         else:
-            # print('Provide_Data, non-key frame')
-            # print('Provide_Data(), non-key frame, len(self.data[0]): ', len(self.data[0]), '\n\n')
-            # tmp_data_name = self.data_name[:]
-            # tmp_data_name.remove('data')
-            # tmp_data_name.remove('data_key')
             self.data_name = ['im_info', 'motion_vector', 'feat_key']
-            # ['im_info', 'motion_vector', 'feat_key']
-            # print('provide_data(), non-key frame, tmp_data_name: ', tmp_data_name)
             if len(self.data[0]) == 5:
                 self.data = [[mx.nd.array(self.data[0][1]), mx.nd.array(self.data[0][3]), mx.nd.array(self.data[0][4])]]
-                # print('Provide_Data(), non-key frame, after assignment, len(self.data[0]): ', len(self.data[0]), '\n\n')
             tmp = [[(k, v.shape) for k, v in zip(self.data_name, self.data[0])]]
             return tmp
-
 
     @property
     def provide_label(self):
@@ -123,13 +107,13 @@ class TestLoader(mx.io.DataIter):
 
     @property
     def provide_data_single_test_initialization(self):
-        # print('self.extend_data: ', self.extend_data)
         tmp_data_name = ['im_info', 'motion_vector', 'feat_key']
         if len(self.extend_data) == 5:
-            tmp = [[mx.nd.array(self.extend_data['im_info']), mx.nd.array(self.extend_data['motion_vector']), mx.nd.array(self.extend_data['feat_key'])]]
-            # print('provide_data_single_test_initialization(), second, self.data: ', self.data)
+            tmp = [[mx.nd.array(self.extend_data['im_info']), 
+                    mx.nd.array(self.extend_data['motion_vector']), 
+                    mx.nd.array(self.extend_data['feat_key'])
+                    ]]
         tmp = [(k, v.shape) for k, v in zip(tmp_data_name, tmp[0])]
-        # print('Provide_Data(), tmp: ', tmp)
         return tmp
 
     @property
@@ -183,11 +167,9 @@ class TestLoader(mx.io.DataIter):
         del data_shape['im_info']
         del data_shape['motion_vector']
         _, feat_shape, _ = self.feat_conv_3x3_relu.infer_shape(**data_shape)
-        # print('get_batch(), data[0][\'motion_vector\']: ', data[0]['motion_vector'], ', data[0][\'motion_vector\'].shape: ', data[0]['motion_vector'].shape)
         data[0]['motion_vector'] = data[0]['motion_vector'].astype('float64')
         data[0]['motion_vector'] = cv2.resize(data[0]['motion_vector'], (int(feat_shape[0][3])*16, int(feat_shape[0][2])*16), interpolation = cv2.INTER_NEAREST)
         data[0]['motion_vector'] = transform(data[0]['motion_vector'], [0,0])
-        # print('get_batch(), data[0][\'motion_vector\']: ', data[0]['motion_vector'], ', data[0][\'motion_vector\'].shape: ', data[0]['motion_vector'].shape)
 
         # Original process
         if self.key_frameid == self.cur_frameid: # key frame
@@ -204,7 +186,8 @@ class TestLoader(mx.io.DataIter):
                         'im_info': data[0]['im_info'],
                         'data_key': self.data_key,
                         'motion_vector': data[0]['motion_vector'],
-                        'feat_key': np.zeros((1,self.cfg.network.DFF_FEAT_DIM,1,1))}]
+                        'feat_key': np.zeros((1,self.cfg.network.DFF_FEAT_DIM,1,1))
+                        }]
         self.extend_data = extend_data[0]
         self.data = [[mx.nd.array(extend_data[i][name]) for name in self.data_name] for i in xrange(len(data))]
         self.im_info = im_info
@@ -266,7 +249,6 @@ class AnchorLoader(mx.io.DataIter):
 
         # decide data and label names
         if config.TRAIN.END2END:
-            # self.data_name = ['data', 'data_ref', 'eq_flag', 'im_info', 'gt_boxes', 'motion_vector']
             self.data_name = ['data_ref', 'eq_flag', 'im_info', 'gt_boxes', 'motion_vector']
         else:
             self.data_name = ['data']
@@ -368,8 +350,7 @@ class AnchorLoader(mx.io.DataIter):
         ctx = self.ctx
         if work_load_list is None:
             work_load_list = [1] * len(ctx)
-        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), \
-            "Invalid settings for work load. "
+        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), "Invalid settings for work load. "
         slices = _split_input_slice(self.batch_size, work_load_list)
 
         # get testing data for multigpu
@@ -389,8 +370,6 @@ class AnchorLoader(mx.io.DataIter):
         new_label_list = []
         for data, label in zip(data_list, label_list):
             # infer label shape
-            #for k, v in data.items():
-            #    print(k, v)
             data_shape = {k: v.shape for k, v in data.items()}
             del data_shape['im_info']
             _, feat_shape, _ = self.feat_sym.infer_shape(**data_shape)
@@ -427,30 +406,19 @@ class AnchorLoader(mx.io.DataIter):
         ctx = self.ctx
         if work_load_list is None:
             work_load_list = [1] * len(ctx)
-        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), \
-            "Invalid settings for work load. "
+        assert isinstance(work_load_list, list) and len(work_load_list) == len(ctx), "Invalid settings for work load. "
         slices = _split_input_slice(self.batch_size, work_load_list)
         rst = []
         for idx, islice in enumerate(slices):
             iroidb = [roidb[i] for i in range(islice.start, islice.stop)]
             rst.append(self.parfetch(iroidb))
-        all_data = [_['data'] for _ in rst]
+        all_data  = [_['data']  for _ in rst]
         all_label = [_['label'] for _ in rst]
 
-        # print('all_data: ', all_data)
-
         # self.data_name = ['data', 'data_ref', 'eq_flag', 'im_info', 'gt_boxes', 'motion_vector']
-        self.data = [[mx.nd.array(data[key]) for key in self.data_name] for data in all_data]
+        self.data  = [[mx.nd.array(data[key])  for key in self.data_name]  for data in all_data]
         # self.label_name = ['label', 'bbox_target', 'bbox_weight']
         self.label = [[mx.nd.array(label[key]) for key in self.label_name] for label in all_label]
-
-        '''
-        print('self.data: ', self.data)
-        print('type(self.data): ', type(self.data))
-        print('len(self.data): ', len(self.data))
-        print('type(self.data[0]): ', type(self.data[0]))
-        '''
-
 
     def parfetch(self, iroidb):
         # get testing data for multigpu
@@ -485,4 +453,3 @@ class AnchorLoader(mx.io.DataIter):
                               self.anchor_ratios, self.allowed_border,
                               self.normalize_target, self.bbox_mean, self.bbox_std)
         return {'data': data, 'label': label}
-

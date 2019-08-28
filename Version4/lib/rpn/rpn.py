@@ -1,8 +1,7 @@
 # --------------------------------------------------------
 # Rivulet
 # Licensed under The MIT License [see LICENSE for details]
-# Modified by Boyuan Feng
-# --------------------------------------------------------
+# Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
 # Deep Feature Flow
 # Copyright (c) 2017 Microsoft
@@ -19,13 +18,15 @@
 """
 RPN:
 data =
-    {'data': [num_images, c, h, w],
-     'im_info': [num_images, 4] (optional)}
+    {'data':    [num_images, c, h, w],
+     'im_info': [num_images, 4] (optional)
+     }
 label =
     {'gt_boxes': [num_boxes, 5] (optional),
      'label': [batch_size, 1] <- [batch_size, num_anchors, feat_height, feat_width],
      'bbox_target': [batch_size, num_anchors, feat_height, feat_width],
-     'bbox_weight': [batch_size, num_anchors, feat_height, feat_width]}
+     'bbox_weight': [batch_size, num_anchors, feat_height, feat_width]
+     }
 """
 
 import numpy as np
@@ -42,7 +43,7 @@ def get_rpn_testbatch(roidb, cfg):
     :param roidb: ['image', 'flipped']
     :return: data, label, im_info
     """
-    # assert len(roidb) == 1, 'Single batch only'
+    assert len(roidb) == 1, 'Single batch only'
     imgs, roidb = get_image(roidb, cfg)
     im_array = imgs
     im_info = [np.array([roidb[i]['im_info']], dtype=np.float32) for i in range(len(roidb))]
@@ -71,9 +72,6 @@ def get_rpn_testbatch_mv(roidb, cfg):
     label = {}
 
     return data, label, im_info
-
-
-
 
 def get_rpn_batch(roidb, cfg):
     """
@@ -131,7 +129,6 @@ def get_rpn_pair_batch(roidb, cfg):
 
     return data, label
 
-
 def get_rpn_pair_mv_batch(roidb, cfg):
     """
     prototype for rpn batch: data, im_info, gt_boxes
@@ -148,7 +145,6 @@ def get_rpn_pair_mv_batch(roidb, cfg):
     eq_flag_array = np.array([eq_flags[0],], dtype=np.float32)
     im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
 
-
     # gt boxes: (x1, y1, x2, y2, cls)
     if roidb[0]['gt_classes'].size > 0:
         gt_inds = np.where(roidb[0]['gt_classes'] != 0)[0]
@@ -161,22 +157,12 @@ def get_rpn_pair_mv_batch(roidb, cfg):
             'data_ref': ref_im_array,
             'eq_flag': eq_flag_array,
             'im_info': im_info,
-            'motion_vector': mv_array}
-    '''
-    data = {'data_ref': ref_im_array,
-            'eq_flag': eq_flag_array,
-            'im_info': im_info,
-            'motion_vector': mv_array}
-    '''
-
+            'motion_vector': mv_array
+            }
 
     label = {'gt_boxes': gt_boxes}
 
     return data, label
-
-
-
-
 
 def assign_anchor(feat_shape, gt_boxes, im_info, cfg, feat_stride=16,
                   scales=(8, 16, 32), ratios=(0.5, 1, 2), allowed_border=0,
@@ -184,21 +170,21 @@ def assign_anchor(feat_shape, gt_boxes, im_info, cfg, feat_stride=16,
                   bbox_std=(0.1, 0.1, 0.4, 0.4)):
     """
     assign ground truth boxes to anchor positions
-    :param feat_shape: infer output shape
-    :param gt_boxes: assign ground truth
-    :param im_info: filter out anchors overlapped with edges
-    :param feat_stride: anchor position step
-    :param scales: used to generate anchors, affects num_anchors (per location)
-    :param ratios: aspect ratios of generated anchors
-    :param allowed_border: filter out anchors with edge overlap > allowed_border
-    :param normalize_target: normalize rpn target
-    :param bbox_mean: anchor target mean
-    :param bbox_std: anchor target std
-    :return: dict of label
-    'label': of shape (batch_size, 1) <- (batch_size, num_anchors, feat_height, feat_width)
-    'bbox_target': of shape (batch_size, num_anchors * 4, feat_height, feat_width)
-    'bbox_inside_weight': *todo* mark the assigned anchors
-    'bbox_outside_weight': used to normalize the bbox_loss, all weights sums to RPN_POSITIVE_WEIGHT
+    :param feat_shape:      infer output shape
+    :param gt_boxes:        assign ground truth
+    :param im_info:         filter out anchors overlapped with edges
+    :param feat_stride:     anchor position step
+    :param scales:          used to generate anchors, affects num_anchors (per location)
+    :param ratios:          aspect ratios of generated anchors
+    :param allowed_border:      filter out anchors with edge overlap > allowed_border
+    :param normalize_target:    normalize rpn target
+    :param bbox_mean:       anchor target mean
+    :param bbox_std:        anchor target std
+    :return:                dict of label
+    'label':        of shape (batch_size, 1) <- (batch_size, num_anchors, feat_height, feat_width)
+    'bbox_target':  of shape (batch_size, num_anchors * 4, feat_height, feat_width)
+    'bbox_inside_weight':   *todo* mark the assigned anchors
+    'bbox_outside_weight':  used to normalize the bbox_loss, all weights sums to RPN_POSITIVE_WEIGHT
     """
     def _unmap(data, count, inds, fill=0):
         """" unmap a subset inds of data into original data of size count """
@@ -349,6 +335,6 @@ def assign_anchor(feat_shape, gt_boxes, im_info, cfg, feat_stride=16,
 
     label = {'label': labels,
              'bbox_target': bbox_targets,
-             'bbox_weight': bbox_weights}
+             'bbox_weight': bbox_weights
+             }
     return label
-

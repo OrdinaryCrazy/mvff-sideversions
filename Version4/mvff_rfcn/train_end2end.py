@@ -102,7 +102,7 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
                                 )
 
     # infer max shape
-    data_shape1 = {'data_ref': (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])),}
+    data_shape1 = {'data_ref': (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))}
     _, feat_shape111, _ = feat_conv_3x3_relu.infer_shape(**data_shape1)
 
     max_data_shape = [('data_ref', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),

@@ -3,7 +3,6 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
-# --------------------------------------------------------
 # Deep Feature Flow
 # Copyright (c) 2017 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
