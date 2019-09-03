@@ -3,7 +3,6 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
-# --------------------------------------------------------
 # Deep Feature Flow
 # Copyright (c) 2017 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
@@ -51,7 +50,7 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         res2a_branch2c = mx.symbol.Convolution(name='res2a_branch2c', data=res2a_branch2b_relu , num_filter=256, pad=(0,0), kernel=(1,1), stride=(1,1), no_bias=True)
         bn2a_branch2c = mx.symbol.BatchNorm(name='bn2a_branch2c', data=res2a_branch2c , use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
         scale2a_branch2c = bn2a_branch2c
-        res2a = mx.symbol.broadcast_add(name='res2a', *[scale2a_branch1,scale2a_branch2c] )
+        res2a = mx.symbol.broadcast_add(name='res2a', *[scale2a_branch1,scale2a_branch2c])
         res2a_relu = mx.symbol.Activation(name='res2a_relu', data=res2a , act_type='relu')
         res2b_branch2a = mx.symbol.Convolution(name='res2b_branch2a', data=res2a_relu , num_filter=64, pad=(0,0), kernel=(1,1), stride=(1,1), no_bias=True)
         bn2b_branch2a = mx.symbol.BatchNorm(name='bn2b_branch2a', data=res2b_branch2a , use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
@@ -690,49 +689,43 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         return group
     
     def get_mv_net(self, motion_vector_scale):
+        motion_vector_scale_1 = mx.sym.Convolution(name='motion_vector_scale_1', data=motion_vector_scale , num_filter=2, pad=(0,0), kernel=(1,1),   stride=(1,1))
+        motion_vector_scale_1 = mx.sym.Pooling(    name='motion_vector__1_pool', data=motion_vector_scale_1, pad=(8,8), kernel=(17,17), stride=(16,16), pool_type='max')
 
-        motion_vector_scale = mx.sym.Convolution(name='motion_vector_scale', data=motion_vector_scale , num_filter=2, pad=(0,0), kernel=(1,1),   stride=(1,1))
-
-        # 600 x 1000 ------------------------------------------------------------------------
-        # motion_vector_scale = mx.sym.Pooling(    name='mv_pool1', data=motion_vector_scale, pad=(3,3), kernel=(7,7), stride=(2,2), pool_type='avg')
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv1', data=motion_vector_scale, num_filter=64, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
+        motion_vector_scale_2 = mx.sym.Convolution(name='motion_vector_scale_2', data=motion_vector_scale , num_filter=2, pad=(0,0), kernel=(1,1),   stride=(1,1))
+        motion_vector_scale_2 = mx.sym.Convolution(name='mv_conv1', data=motion_vector_scale_2, num_filter=64, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
         # # motion_vector_scale = mx.sym.Convolution(name='mv_conv1', data=motion_vector_scale, num_filter=64, pad=(3,3), kernel=(7,7), stride=(2,2), no_bias=False)
-        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn1',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation( name='mv_relu1', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(    name='mv_pool1', data=motion_vector_scale, pad=(3,3), kernel=(7,7), stride=(2,2), pool_type='avg')
+        motion_vector_scale_2 = mx.sym.BatchNorm(  name='mv_bn1',   data=motion_vector_scale_2, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale_2 = mx.sym.Activation( name='mv_relu1', data=motion_vector_scale_2, act_type='relu')
+        motion_vector_scale_2 = mx.sym.Pooling(    name='mv_pool1', data=motion_vector_scale_2, pad=(3,3), kernel=(7,7), stride=(2,2), pool_type='avg')
         # # motion_vector_scale = mx.sym.Convolution(name="mv_pool1", data=motion_vector_scale, num_filter=64, pad=(3,3), kernel=(7,7), stride=(2,2), no_bias=False)
-        # # 300 x 500 ------------------------------------------------------------------------
-        # # motion_vector_scale = mx.sym.Pooling(    name='mv_pool2', data=motion_vector_scale, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='avg')
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv2', data=motion_vector_scale, num_filter=128, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
+
+        motion_vector_scale_2 = mx.sym.Convolution(name='mv_conv2', data=motion_vector_scale_2, num_filter=128, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
         # # motion_vector_scale = mx.sym.Convolution(name='mv_conv2', data=motion_vector_scale, num_filter=128, pad=(1,1), kernel=(3,3), stride=(2,2), no_bias=False)
-        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn2',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation( name='mv_relu2', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(    name='mv_pool2', data=motion_vector_scale, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='avg')
+        motion_vector_scale_2 = mx.sym.BatchNorm(  name='mv_bn2',   data=motion_vector_scale_2, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale_2 = mx.sym.Activation( name='mv_relu2', data=motion_vector_scale_2, act_type='relu')
+        motion_vector_scale_2 = mx.sym.Pooling(    name='mv_pool2', data=motion_vector_scale_2, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='avg')
         # # motion_vector_scale = mx.sym.Convolution(name="mv_pool2", data=motion_vector_scale, num_filter=128, pad=(1,1), kernel=(3,3), stride=(2,2), no_bias=False)
 
-        # # 150 x 250 ------------------------------------------------------------------------
-        # # motion_vector_scale = mx.sym.Pooling(    name='mv_pool3', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='avg')
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv3', data=motion_vector_scale, num_filter=256, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
+        motion_vector_scale_2 = mx.sym.Convolution(name='mv_conv3', data=motion_vector_scale_2, num_filter=256, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
         # # motion_vector_scale = mx.sym.Convolution(name='mv_conv3', data=motion_vector_scale, num_filter=256, pad=(0,0), kernel=(1,1), stride=(2,2), no_bias=False)
-        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn3',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation( name='mv_relu3', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(    name='mv_pool3', data=motion_vector_scale, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='avg')
+        motion_vector_scale_2 = mx.sym.BatchNorm(  name='mv_bn3',   data=motion_vector_scale_2, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale_2 = mx.sym.Activation( name='mv_relu3', data=motion_vector_scale_2, act_type='relu')
+        motion_vector_scale_2 = mx.sym.Pooling(    name='mv_pool3', data=motion_vector_scale_2, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='avg')
         # # motion_vector_scale = mx.sym.Convolution(name="mv_pool3", data=motion_vector_scale, num_flter=256, pad=(0,0), kernel=(1,1), stride=(2,2), no_bias=False)
 
-        # # 75 x 125  ------------------------------------------------------------------------
-        # # motion_vector_scale = mx.sym.Pooling(    name='mv_pool4', data=motion_vector_scale, pad=(0,0), kernel=(1,1), stride=(2,2), pool_type='avg')
-        motion_vector_scale = mx.sym.Convolution(name='mv_conv4', data=motion_vector_scale, num_filter=2, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
+        motion_vector_scale_2 = mx.sym.Convolution(name='mv_conv4', data=motion_vector_scale_2, num_filter=2, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
         # # motion_vector_scale = mx.sym.Convolution(name='mv_conv4', data=motion_vector_scale, num_filter=512, pad=(0,0), kernel=(1,1), stride=(2,2), no_bias=False)
-        motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn4',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
-        motion_vector_scale = mx.sym.Activation( name='mv_relu4', data=motion_vector_scale, act_type='relu')
-        motion_vector_scale = mx.sym.Pooling(    name='mv_pool4', data=motion_vector_scale, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='avg')
+        motion_vector_scale_2 = mx.sym.BatchNorm(  name='mv_bn4',   data=motion_vector_scale_2, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
+        motion_vector_scale_2 = mx.sym.Activation( name='mv_relu4', data=motion_vector_scale_2, act_type='relu')
+        motion_vector_scale_2 = mx.sym.Pooling(    name='mv_pool4', data=motion_vector_scale_2, pad=(1,1), kernel=(3,3), stride=(2,2), pool_type='avg')
         # # motion_vector_scale = mx.sym.Convolution(name="mv_pool4", data=motion_vector_scale, num_filter=512, pad=(0,0), kernel=(1,1), stride=(2,2), no_bias=False)
         # # 36 x 60   ------------------------------------------------------------------------
         # motion_vector_scale = mx.sym.Convolution(name='mv_conv5', data=motion_vector_scale, num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1), no_bias=False)
         # motion_vector_scale = mx.sym.BatchNorm(  name='mv_bn5',   data=motion_vector_scale, use_global_stats=self.use_global_stats, eps=self.eps, fix_gamma=False)
         # motion_vector_scale = mx.sym.Activation( name='mv_relu5', data=motion_vector_scale, act_type='relu')
-        # motion_vector_scale = mx.sym.Convolution(name='onestep_pool',        data=motion_vector_scale,  num_filter=2, pad=(8,8), kernel=(17,17), stride=(16,16))
-        # motion_vector_scale = mx.sym.Convolution(name='motion_vector_scale', data=motion_vector_scale , num_filter=2, pad=(0,0), kernel=(1,1),   stride=(1,1)  )
+        motion_vector_scale = mx.symbol.broadcast_add(name='mv_res' , *[motion_vector_scale_1, motion_vector_scale_2])
+        motion_vector_scale = mx.symbol.Activation(name='mv_res_relu', data=motion_vector_scale , act_type='relu')
 
         return motion_vector_scale
 
@@ -740,15 +733,10 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         #arg_params['Convolution5_scale_weight'] = mx.nd.zeros(shape=self.arg_shape_dict['Convolution5_scale_weight'])
         #arg_params['Convolution5_scale_bias'] = mx.nd.ones(shape=self.arg_shape_dict['Convolution5_scale_bias'])
 
-        arg_params['motion_vector_scale_weight'] = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['motion_vector_scale_weight'])
-        # initializer=mx.init.Xavier()
-        # initializer(mx.init.InitDesc('motion_vector_scale_weight'), arg_params['motion_vector_scale_weight'])
-        arg_params['motion_vector_scale_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['motion_vector_scale_bias'])
-
-        # arg_params['onestep_pool_weight'] = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['onestep_pool_weight'])
-        # initializer=mx.init.Xavier()
-        # initializer(mx.init.InitDesc('motion_vector_scale_weight'), arg_params['motion_vector_scale_weight'])
-        # arg_params['onestep_pool_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['onestep_pool_bias'])
+        arg_params['motion_vector_scale_1_weight'] = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['motion_vector_scale_1_weight'])
+        arg_params['motion_vector_scale_1_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['motion_vector_scale_1_bias'])
+        arg_params['motion_vector_scale_2_weight'] = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['motion_vector_scale_2_weight'])
+        arg_params['motion_vector_scale_2_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['motion_vector_scale_2_bias'])
 
         arg_params['feat_conv_3x3_weight'] = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['feat_conv_3x3_weight'])
         arg_params['feat_conv_3x3_bias'] = mx.nd.zeros(shape=self.arg_shape_dict['feat_conv_3x3_bias'])
@@ -767,10 +755,6 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         initializer=mx.init.Xavier()
         initializer(mx.init.InitDesc('mv_conv1_weight'), arg_params['mv_conv1_weight'])
         arg_params['mv_conv1_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_conv1_bias'])
-        # arg_params['mv_pool1_weight']   = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['mv_pool1_weight'])
-        # initializer=mx.init.Xavier()
-        # initializer(mx.init.InitDesc('mv_pool1_weight'), arg_params['mv_pool1_weight'])
-        # arg_params['mv_pool1_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_pool1_bias'])
 
         arg_params['mv_bn1_gamma']      = mx.nd.ones( shape=self.arg_shape_dict['mv_bn1_gamma'])
         arg_params['mv_bn1_beta']       = mx.nd.zeros(shape=self.arg_shape_dict['mv_bn1_beta'])
@@ -781,10 +765,6 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         initializer=mx.init.Xavier()
         initializer(mx.init.InitDesc('mv_conv2_weight'), arg_params['mv_conv2_weight'])
         arg_params['mv_conv2_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_conv2_bias'])
-        # # arg_params['mv_pool2_weight']   = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['mv_pool2_weight'])
-        # # initializer=mx.init.Xavier()
-        # # initializer(mx.init.InitDesc('mv_pool2_weight'), arg_params['mv_pool2_weight'])
-        # # arg_params['mv_pool2_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_pool2_bias'])
 
         arg_params['mv_bn2_gamma']      = mx.nd.ones( shape=self.arg_shape_dict['mv_bn2_gamma'])
         arg_params['mv_bn2_beta']       = mx.nd.zeros(shape=self.arg_shape_dict['mv_bn2_beta'])
@@ -795,10 +775,6 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         initializer=mx.init.Xavier()
         initializer(mx.init.InitDesc('mv_conv3_weight'), arg_params['mv_conv3_weight'])
         arg_params['mv_conv3_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_conv3_bias'])
-        # # arg_params['mv_pool3_weight']   = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['mv_pool3_weight'])
-        # # initializer=mx.init.Xavier()
-        # # initializer(mx.init.InitDesc('mv_pool3_weight'), arg_params['mv_pool3_weight'])
-        # # arg_params['mv_pool3_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_pool3_bias'])
 
         arg_params['mv_bn3_gamma']      = mx.nd.ones( shape=self.arg_shape_dict['mv_bn3_gamma'])
         arg_params['mv_bn3_beta']       = mx.nd.zeros(shape=self.arg_shape_dict['mv_bn3_beta'])
@@ -807,26 +783,13 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
 
         arg_params['mv_conv4_weight']   = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['mv_conv4_weight'])
         initializer=mx.init.Xavier()
-        initializer(mx.init.InitDesc('mv_conv3_weight'), arg_params['mv_conv4_weight'])
+        initializer(mx.init.InitDesc('mv_conv4_weight'), arg_params['mv_conv4_weight'])
         arg_params['mv_conv4_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_conv4_bias'])
-        # # arg_params['mv_pool4_weight']   = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['mv_pool4_weight'])
-        # # initializer=mx.init.Xavier()
-        # # initializer(mx.init.InitDesc('mv_pool4_weight'), arg_params['mv_pool4_weight'])
-        # # arg_params['mv_pool4_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_pool4_bias'])
 
         arg_params['mv_bn4_gamma']      = mx.nd.ones( shape=self.arg_shape_dict['mv_bn4_gamma'])
         arg_params['mv_bn4_beta']       = mx.nd.zeros(shape=self.arg_shape_dict['mv_bn4_beta'])
         aux_params['mv_bn4_moving_mean']= mx.nd.zeros(shape=self.aux_shape_dict['mv_bn4_moving_mean'])
         aux_params['mv_bn4_moving_var'] = mx.nd.ones( shape=self.aux_shape_dict['mv_bn4_moving_var'])
-
-        # arg_params['mv_conv5_weight']   = mx.random.normal(0, 0.01, shape=self.arg_shape_dict['mv_conv5_weight'])
-        # initializer=mx.init.Xavier()
-        # initializer(mx.init.InitDesc('mv_conv5_weight'), arg_params['mv_conv5_weight'])
-        # arg_params['mv_conv5_bias']   = mx.nd.zeros(shape=self.arg_shape_dict['mv_conv5_bias'])
-        # arg_params['mv_bn5_gamma']      = mx.nd.ones( shape=self.arg_shape_dict['mv_bn5_gamma'])
-        # arg_params['mv_bn5_beta']       = mx.nd.zeros(shape=self.arg_shape_dict['mv_bn5_beta'])
-        # aux_params['mv_bn5_moving_mean']= mx.nd.zeros(shape=self.aux_shape_dict['mv_bn5_moving_mean'])
-        # aux_params['mv_bn5_moving_var'] = mx.nd.ones( shape=self.aux_shape_dict['mv_bn5_moving_var'])
 
     def get_cur_test_symbol(self, cfg):
 
@@ -914,5 +877,3 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
     def get_batch_test_symbol(self, cfg):
         # TODO
         return
-
-    

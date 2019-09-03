@@ -50,9 +50,9 @@ network:
 dataset:
   NUM_CLASSES: 31
   dataset: ImageNetVID
-  dataset_path: "/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015"
+  dataset_path: "/home/ssd1T_2/boyuan/ImageNetVID/ILSVRC2015"
   image_set: DET_train_30classes+VID_train_15frames
-  root_path: "/home/ssd1T_1/boyuan/ImageNetVID"
+  root_path: "/home/ssd1T_2/boyuan/ImageNetVID"
   test_image_set: VID_val_videos
   proposal: rpn
 TRAIN:

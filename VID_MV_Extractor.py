@@ -67,12 +67,12 @@ def mv_extraction_per_video_collection(path_to_video_directory, target_directory
 def mv_extraction_train_part(frame_segment_id_collection):
     count = 0
     for path in frame_segment_id_collection:
-        path_to_video_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/Data/VID/' + path
+        path_to_video_directory = '/home/ssd1T_2/boyuan/ImageNetVID/ILSVRC2015/Data/VID/' + path
         collection = frame_segment_id_collection[path]
 
         # Define path_to_target_directory
         # target_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/MV/VID/' + path
-        target_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/Res/VID/' + path
+        target_directory = '/home/jingtun/Res2/VID/' + path
 
         # target_directory may not exist. If so, we create one.
         if not os.path.isdir(target_directory):

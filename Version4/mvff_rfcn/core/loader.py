@@ -168,7 +168,7 @@ class TestLoader(mx.io.DataIter):
         del data_shape['motion_vector']
         _, feat_shape, _ = self.feat_conv_3x3_relu.infer_shape(**data_shape)
         data[0]['motion_vector'] = data[0]['motion_vector'].astype('float64')
-        data[0]['motion_vector'] = cv2.resize(data[0]['motion_vector'], (int(feat_shape[0][3])*16, int(feat_shape[0][2])*16), interpolation = cv2.INTER_NEAREST)
+        data[0]['motion_vector'] = cv2.resize(data[0]['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_NEAREST)
         data[0]['motion_vector'] = transform(data[0]['motion_vector'], [0,0])
 
         # Original process
@@ -434,12 +434,12 @@ class AnchorLoader(mx.io.DataIter):
         _, feat_shape, _ = self.feat_conv_3x3_relu.infer_shape(**data_shape1)
 
         data['motion_vector'] = data['motion_vector'].astype('float64')
-        data['motion_vector'] = cv2.resize(data['motion_vector'], (int(feat_shape[0][3])*16, int(feat_shape[0][2])*16), interpolation = cv2.INTER_AREA)
-        data['motion_vector'] = transform(data['motion_vector'], [0,0])
+        data['motion_vector'] = cv2.resize(data['motion_vector'], (int(feat_shape[0][3]), int(feat_shape[0][2])), interpolation = cv2.INTER_NEAREST)
+        # question here
+        data['motion_vector'] = transform(data['motion_vector'], [0,0,0,0,0])
         data_shape = {k: v.shape for k, v in data.items()}
         del data_shape['im_info']
         del data_shape['data']
-
 
         _, feat_shape, _ = self.feat_sym.infer_shape(**data_shape)
         feat_shape = [int(i) for i in feat_shape[0]]
