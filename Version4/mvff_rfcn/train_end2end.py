@@ -108,7 +108,7 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     max_data_shape = [('data_ref', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),
                       ('eq_flag', (1,)),
                     #   ('motion_vector', (config.TRAIN.BATCH_IMAGES, 2, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
-                      ('motion_vector', (config.TRAIN.BATCH_IMAGES, 2, int(feat_shape111[0][2])*16, int(feat_shape111[0][3])*16 ))]
+                      ('motion_vector', (config.TRAIN.BATCH_IMAGES, 5, int(feat_shape111[0][2]), int(feat_shape111[0][3]) ))]
                     #   ('motion_vector', (config.TRAIN.BATCH_IMAGES, 2, int(feat_shape111[0][2]), int(feat_shape111[0][3]) ))]
 
     max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)

@@ -63,7 +63,7 @@ TRAIN:
   end_epoch: 1
   model_prefix: 'mvff_rfcn_vid'
   # whether resume training
-  RESUME: false
+  RESUME: true
   # whether flip image
   FLIP: true
   # whether shuffle image

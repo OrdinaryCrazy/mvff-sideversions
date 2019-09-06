@@ -3,7 +3,6 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
-# --------------------------------------------------------
 # Deep Feature Flow
 # Copyright (c) 2017 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
@@ -52,6 +51,7 @@ def get_image(roidb, config):
     return processed_ims, processed_roidb
 
 mv_not_found_count = 0
+res_not_found_count = 0
 
 # Used for test only
 def get_image_mv(roidb, config):
@@ -61,6 +61,7 @@ def get_image_mv(roidb, config):
     :return: list of img as in mxnet format
     '''
     global mv_not_found_count
+    global res_not_found_count
     num_images = len(roidb)
     processed_ims = []
     processed_roidb = []
@@ -71,26 +72,34 @@ def get_image_mv(roidb, config):
         im = cv2.imread(roi_rec['image'], cv2.IMREAD_COLOR|cv2.IMREAD_IGNORE_ORIENTATION)
 
         # TODO. This position should read the motion vector.
-        # Original: path_to_mv_pattern: ['self.data_path', 'Data', 'DET', 'train', 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
         path_to_mv_pattern = roi_rec['image'].split('/')
-        # Expect: path_to_mv_pattern: ['self.data_path', 'MV', 'DET', 'train', 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
         path_to_mv_pattern[6] = 'MV'
         path_to_mv = '/'.join(path_to_mv_pattern)
         path_to_mv = path_to_mv[:-5] + '.pkl'
 
         if not os.path.exists(path_to_mv):
             mv_not_found_count += 1
-            # mv = np.ones(2*600*1000).reshape((600,1000,2))
-            mv = np.zeros(2*600*1000).reshape((600,1000,2))
+            mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
             print('mv_not_found_count: ', mv_not_found_count, ', path_to_mv: ', path_to_mv)
         else:
             mv = pickle.load(open(path_to_mv, 'rb'))
-            # For debugging, mv is set to zero now. This indicates that the cur feature should be same as the key feature.
-            # mv = np.zeros(2*600*1000).reshape((600,1000,2))
+
+        # read the residual
+        path_to_res_pattern = roi_rec['image'].split('/')
+        path_to_res_pattern[6] = 'Res'
+        path_to_res = '/'.join(path_to_res_pattern)
+        path_to_res = path_to_res[:-5] + '.pkl'
+        if not os.path.exists(path_to_res):
+            res_not_found_count += 1
+            res = np.zeros(3 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 3))
+            print('res_not_found_count: ', res_not_found_count, ', path_to_res: ', path_to_res)
+        else:
+            res = pickle.load(open(path_to_res, 'rb'))
 
         if roidb[i]['flipped']:
             im = im[:, ::-1, :]
             mv = mv[:, ::-1, :]
+            res = res[:, ::-1, :]
 
         new_rec = roi_rec.copy()
         scale_ind = random.randrange(len(config.SCALES))
@@ -98,7 +107,7 @@ def get_image_mv(roidb, config):
         max_size = config.SCALES[scale_ind][1]
         im, im_scale = resize(im, target_size, max_size, stride=config.network.IMAGE_STRIDE)
         im_tensor = transform(im, config.network.PIXEL_MEANS)
-        mv_tensor = mv
+        mv_tensor = np.concatenate((mv,res), axis=2)
         processed_ims.append(im_tensor)
         processed_mvs.append(mv_tensor)
         im_info = [im_tensor.shape[2], im_tensor.shape[3], im_scale]
@@ -164,6 +173,7 @@ def get_pair_image(roidb, config):
     return processed_ims, processed_ref_ims, processed_eq_flags, processed_roidb
 
 train_mv_not_found_count = 0
+train_res_not_found_count = 0
 
 def get_pair_image_mv(roidb, config):
     """
@@ -172,6 +182,7 @@ def get_pair_image_mv(roidb, config):
     :return: list of img as in mxnet format
     """
     global train_mv_not_found_count
+    global train_res_not_found_count
     num_images          = len(roidb)
     processed_ims       = []
     processed_ref_ims   = []
@@ -183,7 +194,6 @@ def get_pair_image_mv(roidb, config):
         roi_rec = roidb[i]
 
         eq_flag = 0 # 0 for non-key frame, 1 for key frame.
-        # roi_rec['image'] = self.data_path/Data/DET/train/ILSVRC2015_VID_train_0000/ILSVRC2015_train_00000000/000010.JPEG
         assert os.path.exists(roi_rec['image']), '%s does not exist'.format(roi_rec['image'])
         im = cv2.imread(roi_rec['image'], cv2.IMREAD_COLOR|cv2.IMREAD_IGNORE_ORIENTATION)
 
@@ -197,11 +207,7 @@ def get_pair_image_mv(roidb, config):
             if ref_id == roi_rec['frame_seg_id']:
                 eq_flag = 1
             # TODO. This position should read the motion vector.
-            # Original: path_to_mv_pattern: ['self.data_path', 'Data', 'DET', 'train', 
-            # 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
             path_to_mv_pattern = roi_rec['image'].split('/')
-            # Expect: path_to_mv_pattern: ['self.data_path', 'MV', 'DET', 'train', 
-            # 'ILSVRC2015_VID_train_0000', 'ILSVRC2015_train_00000000', '000010.JPEG']
             path_to_mv_pattern[6] = 'MV'
             path_to_mv = '/'.join(path_to_mv_pattern)
             path_to_mv = path_to_mv[:-5] + '.pkl'
@@ -215,14 +221,14 @@ def get_pair_image_mv(roidb, config):
             # read the residual
             path_to_res_pattern = roi_rec['image'].split('/')
             path_to_res_pattern[6] = 'Res'
-            path_to_res = '/'.join()
-            path_to_res = path_to_res[:-5] + 'pkl'
-            if not os.path.exists(path_to_mv):
-                train_mv_not_found_count += 1
-                mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
-                print('train_mv_not_found_count: ', train_mv_not_found_count, ', path_to_mv: ', path_to_mv)
+            path_to_res = '/'.join(path_to_res_pattern)
+            path_to_res = path_to_res[:-5] + '.pkl'
+            if not os.path.exists(path_to_res):
+                train_res_not_found_count += 1
+                res = np.zeros(3 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 3))
+                print('train_res_not_found_count: ', train_res_not_found_count, ', path_to_res: ', path_to_res)
             else:
-                mv = pickle.load(open(path_to_mv, 'rb'))
+                res = pickle.load(open(path_to_res, 'rb'))
                 
         else:
             # Case II: DET train data.
@@ -230,12 +236,14 @@ def get_pair_image_mv(roidb, config):
             eq_flag = 1
             # Should have a definition of mv. No mv for DET train data.
             mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
+            res = np.zeros(3 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 3))
 
 
         if roidb[i]['flipped']:
             im = im[:, ::-1, :]
             ref_im = ref_im[:, ::-1, :]
             mv = mv[:, ::-1, :]
+            res = res[:, ::-1, :]
 
         new_rec = roi_rec.copy()
         scale_ind = random.randrange(len(config.SCALES))
@@ -248,7 +256,9 @@ def get_pair_image_mv(roidb, config):
         im_tensor = transform(im, config.network.PIXEL_MEANS)
         ref_im_tensor = transform(ref_im, config.network.PIXEL_MEANS)
         #mv_tensor = transform(mv, [0,0,0])
-        mv_tensor = mv
+        mv_tensor = np.concatenate((mv,res), axis=2)
+        # print "MV: ", mv.shape, "Res:", res.shape, "Stack MV: ", mv_tensor.shape
+
         processed_ims.append(im_tensor)
         processed_ref_ims.append(ref_im_tensor)
         processed_mvs.append(mv_tensor)

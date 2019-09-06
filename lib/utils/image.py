@@ -3,7 +3,6 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Modified by Boyuan Feng, Jingtun ZHANG
 # --------------------------------------------------------
-# --------------------------------------------------------
 # Deep Feature Flow
 # Copyright (c) 2017 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
@@ -81,7 +80,8 @@ def get_image_mv(roidb, config):
         if not os.path.exists(path_to_mv):
             mv_not_found_count += 1
             # mv = np.ones(2*600*1000).reshape((600,1000,2))
-            mv = np.zeros(2*600*1000).reshape((600,1000,2))
+            # mv = np.zeros(2*600*1000).reshape((600,1000,2))
+            mv = np.zeros(2 * im.shape[0] * im.shape[1]).reshape((im.shape[0], im.shape[1], 2))
             print('mv_not_found_count: ', mv_not_found_count, ', path_to_mv: ', path_to_mv)
         else:
             mv = pickle.load(open(path_to_mv, 'rb'))

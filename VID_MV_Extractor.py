@@ -16,7 +16,8 @@ def load_mv(path_to_mv):
     return mv
 
 def get_frame_segment_id_collection():
-    handler = open('VID_train_15frames.txt', 'r')
+    handler = open('VID_train_15frames_1.txt', 'r')
+    # handler = open('VID_val_videos_eval.txt', 'r')
 
     lines = handler.readlines()
 
@@ -27,9 +28,11 @@ def get_frame_segment_id_collection():
     frame_segment_id_collection = {}
     for split in splits:
         path = split[0]
+        # path = split[0][:-7]
         if path not in frame_segment_id_collection:
             frame_segment_id_collection[path] = []
         frame_segment_id_collection[path].append(split[2])
+        # frame_segment_id_collection[path].append(int(split[0][-6:]))
 
     return frame_segment_id_collection
 
@@ -42,7 +45,7 @@ def video2mv_collection(path_to_video, target_directory, collection):
         group_idx = idx_int // 12
         frame_idx = idx_int % 12 + 5
         try:
-            print("path_to_video:!!!" + path_to_video)
+            print("path_to_video:!!!" + path_to_video + '  ind: ' + str(idx_int))
             mv = coviar.load(path_to_video, group_idx, frame_idx, 2, True)
             mv = mv.astype('int8')
             mv_path = '%06d' % idx_int
@@ -73,6 +76,7 @@ def mv_extraction_train_part(frame_segment_id_collection):
         # Define path_to_target_directory
         # target_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/MV/VID/' + path
         target_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/Res/VID/' + path
+        # target_directory = '/home/jingtun/Res/VID/' + path
 
         # target_directory may not exist. If so, we create one.
         if not os.path.isdir(target_directory):
