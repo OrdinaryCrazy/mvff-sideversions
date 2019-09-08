@@ -21,6 +21,7 @@ import pprint
 import os
 import sys
 from config.config import config, update_config
+import pickle
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train R-FCN network')
@@ -64,6 +65,8 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     sym_instance = eval(config.symbol + '.' + config.symbol)()
     sym = sym_instance.get_train_symbol(config)
     feat_sym = sym.get_internals()['rpn_cls_score_output']
+
+
 
     # setup multi-gpu
     batch_size = len(ctx)
@@ -168,6 +171,11 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
             optimizer='sgd', optimizer_params=optimizer_params,
             arg_params=arg_params, aux_params=aux_params, begin_epoch=begin_epoch, num_epoch=end_epoch)
 
+    # flow = mod.get_outputs()[-1].asnumpy()
+    # flow = flow.astype('int8')
+    # flow_path = '%06d' % idx_int
+    # flow_path = target_directory + '/' + mv_path + '.pkl'
+    # pickle.dump(flow, open(flow_path, 'wb'), protocol=2)
 
 def main():
     print('Called with argument:', args)

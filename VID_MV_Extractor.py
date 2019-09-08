@@ -6,6 +6,8 @@ from collections import deque
 import cv2
 import pickle
 
+VAL_OR_TRAIN = 1 # 0 for train, 1 for validation
+
 def img2video(path_to_directory, target_directory):
     os.system('ffmpeg -framerate 30 -pattern_type glob -i ' + path_to_directory + '/\'*.JPEG\' -c:v libx264 -pix_fmt yuv420p ' + target_directory + '/out.mp4')
     os.system('ffmpeg -i ' + target_directory + '/out.mp4 -c:v mpeg4 -f rawvideo ' + target_directory + '/output.mp4')
@@ -16,25 +18,33 @@ def load_mv(path_to_mv):
     return mv
 
 def get_frame_segment_id_collection():
-    handler = open('VID_train_15frames_1.txt', 'r')
-    # handler = open('VID_val_videos_eval.txt', 'r')
+    if VAL_OR_TRAIN == 0:
+        handler = open('VID_train_15frames_1.txt', 'r')
+    else:
+        handler = open('VID_val_videos_eval.txt', 'r')
 
     lines = handler.readlines()
-
     splits = []
     for line in lines:
         splits.append(line[:-1].split(' '))
 
     frame_segment_id_collection = {}
     for split in splits:
-        path = split[0]
-        # path = split[0][:-7]
+        if VAL_OR_TRAIN == 0:
+            path = split[0]
+        else:
+            path = split[0][:-7]
+        
         if path not in frame_segment_id_collection:
             frame_segment_id_collection[path] = []
-        frame_segment_id_collection[path].append(split[2])
-        # frame_segment_id_collection[path].append(int(split[0][-6:]))
+
+        if VAL_OR_TRAIN == 0:
+            frame_segment_id_collection[path].append(split[2])
+        else:
+            frame_segment_id_collection[path].append(int(split[0][-6:]))
 
     return frame_segment_id_collection
+
 
 error_recorder = []
 
@@ -43,7 +53,7 @@ def video2mv_collection(path_to_video, target_directory, collection):
     for idx in collection:
         idx_int = int(idx)
         group_idx = idx_int // 12
-        frame_idx = idx_int % 12 + 5
+        frame_idx = idx_int % 12
         try:
             print("path_to_video:!!!" + path_to_video + '  ind: ' + str(idx_int))
             mv = coviar.load(path_to_video, group_idx, frame_idx, 2, True)
@@ -70,12 +80,13 @@ def mv_extraction_per_video_collection(path_to_video_directory, target_directory
 def mv_extraction_train_part(frame_segment_id_collection):
     count = 0
     for path in frame_segment_id_collection:
-        path_to_video_directory = '/home/ssd1T_2/boyuan/ImageNetVID/ILSVRC2015/Data/VID/' + path
+        path_to_video_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/Data/VID/' + path
         collection = frame_segment_id_collection[path]
 
         # Define path_to_target_directory
         # target_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/MV/VID/' + path
-        target_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/Res/VID/' + path
+        # target_directory = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/Res/VID/' + path
+        target_directory = '/home/ssd1T_2/boyuan/ImageNetVID/ILSVRC2015/Res/VID/' + path
         # target_directory = '/home/jingtun/Res/VID/' + path
 
         # target_directory may not exist. If so, we create one.

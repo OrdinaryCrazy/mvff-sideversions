@@ -689,8 +689,9 @@ class resnet_v1_101_motion_vector_rfcn(Symbol):
         return group
     
     def get_mv_net(self, motion_vector_scale):
-        motion_vector_scale_1 = mx.sym.Convolution(name='motion_vector_scale_1', data=motion_vector_scale , num_filter=2, pad=(0,0), kernel=(1,1),   stride=(1,1))
-        motion_vector_scale_1 = mx.sym.Pooling(    name='motion_vector__1_pool', data=motion_vector_scale_1, pad=(8,8), kernel=(17,17), stride=(16,16), pool_type='max')
+        motion_vector_scale_1 = mx.sym.contrib.BilinearResize2D(name='mv_resize', data=motion_vector_scale, scale_height=0.0625, scale_width=0.0625, mode='odd_scale')
+        motion_vector_scale_1 = mx.sym.Convolution(name='motion_vector_scale_1', data=motion_vector_scale_1 , num_filter=2, pad=(0,0), kernel=(1,1), stride=(1,1))
+        # motion_vector_scale_1 = mx.sym.Pooling(    name='motion_vector__1_pool', data=motion_vector_scale_1, pad=(8,8), kernel=(17,17), stride=(16,16), pool_type='max')
 
         motion_vector_scale_2 = mx.sym.Convolution(name='motion_vector_scale_2', data=motion_vector_scale , num_filter=2, pad=(0,0), kernel=(1,1),   stride=(1,1))
         motion_vector_scale_2 = mx.sym.Convolution(name='mv_conv1', data=motion_vector_scale_2, num_filter=64, pad=(1,1), kernel=(3,3), stride=(1,1), no_bias=False)
