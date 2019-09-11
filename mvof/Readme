@@ -1,0 +1,18 @@
+To run mvof version1:
+  python2 output_mvff_version1.py
+
+This line reads predictions from "det_VID_val_videos_all.txt"
+The output is a file of propagated predictions, named as "propagated_results".
+
+
+
+
+To compute the mAP:
+  python2 eval.py
+
+This line reads predictions from "det_VID_val_videos_all.txt" and assumes that "VID_val_videos_eval.txt" contains all the frame index to evaluate.
+The output is a number of mAP.
+
+
+
+

@@ -2,7 +2,7 @@
 MXNET_VERSION: "mxnet"
 output_path: "./output/mvff_rfcn/imagenet_vid"
 symbol: resnet_v1_101_motion_vector_rfcn
-gpus: '0, 1'
+gpus: '0'
 CLASS_AGNOSTIC: true
 SCALES:
 - 600
@@ -50,9 +50,9 @@ network:
 dataset:
   NUM_CLASSES: 31
   dataset: ImageNetVID
-  dataset_path: "/home/ssd1T_2/boyuan/ImageNetVID/ILSVRC2015"
+  dataset_path: "/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015"
   image_set: DET_train_30classes+VID_train_15frames
-  root_path: "/home/ssd1T_2/boyuan/ImageNetVID"
+  root_path: "/home/ssd1T_1/boyuan/ImageNetVID"
   test_image_set: VID_val_videos
   proposal: rpn
 TRAIN:

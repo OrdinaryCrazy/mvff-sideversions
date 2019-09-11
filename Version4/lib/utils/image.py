@@ -73,7 +73,10 @@ def get_image_mv(roidb, config):
 
         # TODO. This position should read the motion vector.
         path_to_mv_pattern = roi_rec['image'].split('/')
+        # print(path_to_mv_pattern)
+        # input()
         path_to_mv_pattern[6] = 'MV'
+        # path_to_mv_pattern[2] = 'ssd1T_2'
         path_to_mv = '/'.join(path_to_mv_pattern)
         path_to_mv = path_to_mv[:-5] + '.pkl'
 
@@ -86,6 +89,7 @@ def get_image_mv(roidb, config):
 
         # read the residual
         path_to_res_pattern = roi_rec['image'].split('/')
+        path_to_res_pattern[2] = 'ssd1T_2'
         path_to_res_pattern[6] = 'Res'
         path_to_res = '/'.join(path_to_res_pattern)
         path_to_res = path_to_res[:-5] + '.pkl'
