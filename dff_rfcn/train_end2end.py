@@ -66,8 +66,6 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
     sym = sym_instance.get_train_symbol(config)
     feat_sym = sym.get_internals()['rpn_cls_score_output']
 
-
-
     # setup multi-gpu
     batch_size = len(ctx)
     input_batch_size = config.TRAIN.BATCH_IMAGES * batch_size
@@ -172,6 +170,9 @@ def train_net(args, ctx, pretrained, pretrained_flow, epoch, prefix, begin_epoch
             arg_params=arg_params, aux_params=aux_params, begin_epoch=begin_epoch, num_epoch=end_epoch)
 
     # flow = mod.get_outputs()[-1].asnumpy()
+    # print mod.get_params()[0].keys()
+    # print flow
+    # input()
     # flow = flow.astype('int8')
     # flow_path = '%06d' % idx_int
     # flow_path = target_directory + '/' + mv_path + '.pkl'

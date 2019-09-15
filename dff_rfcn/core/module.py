@@ -31,6 +31,7 @@ from .DataParallelExecutorGroup import DataParallelExecutorGroup
 from mxnet import ndarray as nd
 from mxnet import optimizer as opt
 
+import pickle
 
 class Module(BaseModule):
     """Module is a basic module that wrap a `Symbol`. It is functionally the same
@@ -753,6 +754,8 @@ class MutableModule(BaseModule):
         self._fixed_param_names = fixed_param_names
         self._preload_opt_states = None
 
+        self.flow_count = 0
+
     def _reset_bind(self):
         self.binded = False
         self._curr_module = None
@@ -973,6 +976,19 @@ class MutableModule(BaseModule):
                 if monitor is not None:
                     monitor.tic()
                 self.forward_backward(data_batch)
+                # self.forward(data_batch, is_train=True)
+                # ['rpn_cls_prob_output', 'rpn_bbox_loss_output', 'cls_prob_reshape_output', 
+                # 'bbox_loss_reshape_output', 'blockgrad0_output', '_mulscalar0_output']
+                # print self.symbol.list_outputs()
+                # flow_out = self.get_outputs()[-1].asnumpy()
+                # for f in flow_out:
+                #     pickle.dump(f, open("/home/jingtun/feat_flow_compare/flow_%06d.pkl" % self.flow_count, 'wb'), protocol=2)
+                #     self.flow_count += 1
+                # f = self.symbol.get_internals()["_mulscalar0_output"]
+                # if f is not None:
+                #     print f.asnumpy()
+                #     input()
+
                 self.update()
                 self.update_metric(eval_metric, data_batch.label)
 
@@ -1031,6 +1047,10 @@ class MutableModule(BaseModule):
 
         # decide if shape changed
         shape_changed = len(current_shapes) != len(input_shapes)
+        # print current_shapes
+        # print input_shapes
+        # print zip(current_shapes, input_shapes)
+        # input()
         for pre, cur in zip(current_shapes, input_shapes):
             for k, v in pre.items():
                 if v != cur[k]:

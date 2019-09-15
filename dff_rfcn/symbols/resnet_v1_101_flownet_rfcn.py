@@ -564,6 +564,11 @@ class resnet_v1_101_flownet_rfcn(Symbol):
 
         conv_feats = mx.sym.SliceChannel(select_conv_feat, axis=1, num_outputs=2)
 
+        # args_params, aux_params = flow.get_params()
+        # print args_params, aux_params
+        # # print flow_out.shape
+        # input()
+
         # RPN layers
         rpn_feat = conv_feats[0]
         rpn_cls_score = mx.sym.Convolution(
@@ -654,8 +659,8 @@ class resnet_v1_101_flownet_rfcn(Symbol):
         cls_prob = mx.sym.Reshape(data=cls_prob, shape=(cfg.TRAIN.BATCH_IMAGES, -1, num_classes), name='cls_prob_reshape')
         bbox_loss = mx.sym.Reshape(data=bbox_loss, shape=(cfg.TRAIN.BATCH_IMAGES, -1, 4 * num_reg_classes), name='bbox_loss_reshape')
 
-        # group = mx.sym.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob, bbox_loss, mx.sym.BlockGrad(rcnn_label)])
-        group = mx.sym.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob, bbox_loss, mx.sym.BlockGrad(rcnn_label), flow])
+        group = mx.sym.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob, bbox_loss, mx.sym.BlockGrad(rcnn_label)])
+        # group = mx.sym.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob, bbox_loss, mx.sym.BlockGrad(rcnn_label), flow])
         self.sym = group
         return group
 

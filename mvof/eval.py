@@ -6,7 +6,9 @@
 
 import os
 
-detpath = 'det_VID_val_videos_all.txt'
+# detpath = 'det_VID_val_videos_all.txt'
+# detpath = 'origin_propagated_results'
+detpath = 'propagated_results'
 annopath = '/home/ssd1T_1/boyuan/ImageNetVID/ILSVRC2015/Annotations/{0!s}.xml'
 imageset_file = 'VID_val_videos_eval.txt'
 classname_map = ['__background__', 'n02691156', 'n02419796', 'n02131653', 'n02834778', 'n01503061', 'n02924116', 'n02958343', 'n02402425', 'n02084071', 'n02121808', 'n02503517', 'n02118333', 'n02510455', 'n02342885', 'n02374451', 'n02129165', 'n01674464', 'n02484322', 'n03790512', 'n02324045', 'n02509815', 'n02411705', 'n01726692', 'n02355227', 'n02129604', 'n04468005', 'n01662784', 'n04530566', 'n02062744', 'n02391049']
